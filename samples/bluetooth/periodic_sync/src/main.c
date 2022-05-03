@@ -82,7 +82,8 @@ static void scan_recv(const struct bt_le_scan_recv_info *info,
 	bt_data_parse(buf, data_cb, name);
 
 	bt_addr_le_to_str(info->addr, le_addr, sizeof(le_addr));
-	printk("[DEVICE]: %s, AD evt type %u, Tx Pwr: %i, RSSI %i %s "
+	if(info->adv_type == 5){
+	printk("DK [DEVICE]: %s, AD evt type %u, Tx Pwr: %i, RSSI %i %s "
 	       "C:%u S:%u D:%u SR:%u E:%u Prim: %s, Secn: %s, "
 	       "Interval: 0x%04x (%u ms), SID: %u\n",
 	       le_addr, info->adv_type, info->tx_power, info->rssi, name,
@@ -93,7 +94,7 @@ static void scan_recv(const struct bt_le_scan_recv_info *info,
 	       (info->adv_props & BT_GAP_ADV_PROP_EXT_ADV) != 0,
 	       phy2str(info->primary_phy), phy2str(info->secondary_phy),
 	       info->interval, info->interval * 5 / 4, info->sid);
-
+	}
 	if (!per_adv_found && info->interval) {
 		per_adv_found = true;
 
@@ -115,7 +116,7 @@ static void sync_cb(struct bt_le_per_adv_sync *sync,
 
 	bt_addr_le_to_str(info->addr, le_addr, sizeof(le_addr));
 
-	printk("PER_ADV_SYNC[%u]: [DEVICE]: %s synced, "
+	printk("DK PER_ADV_SYNC[%u]: [DEVICE]: %s synced, "
 	       "Interval 0x%04x (%u ms), PHY %s\n",
 	       bt_le_per_adv_sync_get_index(sync), le_addr,
 	       info->interval, info->interval * 5 / 4, phy2str(info->phy));
@@ -130,7 +131,7 @@ static void term_cb(struct bt_le_per_adv_sync *sync,
 
 	bt_addr_le_to_str(info->addr, le_addr, sizeof(le_addr));
 
-	printk("PER_ADV_SYNC[%u]: [DEVICE]: %s sync terminated\n",
+	printk("DK PER_ADV_SYNC[%u]: [DEVICE]: %s sync terminated\n",
 	       bt_le_per_adv_sync_get_index(sync), le_addr);
 
 	k_sem_give(&sem_per_sync_lost);
@@ -146,7 +147,7 @@ static void recv_cb(struct bt_le_per_adv_sync *sync,
 	bt_addr_le_to_str(info->addr, le_addr, sizeof(le_addr));
 	bin2hex(buf->data, buf->len, data_str, sizeof(data_str));
 
-	printk("PER_ADV_SYNC[%u]: [DEVICE]: %s, tx_power %i, "
+	printk("DK PER_ADV_SYNC[%u]: [DEVICE]: %s, tx_power %i, "
 	       "RSSI %i, CTE %u, data length %u, data: %s\n",
 	       bt_le_per_adv_sync_get_index(sync), le_addr, info->tx_power,
 	       info->rssi, info->cte_type, buf->len, data_str);
@@ -157,6 +158,13 @@ static struct bt_le_per_adv_sync_cb sync_callbacks = {
 	.term = term_cb,
 	.recv = recv_cb
 };
+struct bt_le_scan_param scan_param = {
+                .type       = 0x00,
+                .options    = BT_LE_SCAN_OPT_NONE,
+                .interval   = 0x0010,
+                .window     = 0x0010,
+        };
+
 
 void main(void)
 {
@@ -201,7 +209,8 @@ void main(void)
 	printk("Success.\n");
 
 	printk("Start scanning...");
-	err = bt_le_scan_start(BT_LE_SCAN_ACTIVE, NULL);
+//	err = bt_le_scan_start(BT_LE_SCAN_ACTIVE, NULL);
+	err=bt_le_scan_start(&scan_param,NULL);
 	if (err) {
 		printk("failed (err %d)\n", err);
 		return;
@@ -252,7 +261,7 @@ void main(void)
 			continue;
 		}
 		printk("Periodic sync established.\n");
-
+//		err = bt_le_per_adv_sync_delete(sync);
 #if defined(HAS_LED)
 		printk("Stop blinking LED.\n");
 		k_delayed_work_cancel(&blink_work);

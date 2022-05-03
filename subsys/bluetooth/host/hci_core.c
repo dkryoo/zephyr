@@ -507,7 +507,6 @@ static int set_random_address(const bt_addr_t *addr)
 	int err;
 
 	BT_DBG("%s", bt_addr_str(addr));
-
 	/* Do nothing if we already have the right address */
 	if (!bt_addr_cmp(addr, &bt_dev.random_addr.a)) {
 		return 0;
@@ -6598,12 +6597,11 @@ static int set_data_add(uint8_t *set_data, uint8_t set_data_len_max,
 		for (size_t j = 0; j < ad[i].len; j++) {
 			size_t len = data[j].data_len;
 			uint8_t type = data[j].type;
-
+		//	printk("NOW: %u, STANDARD: %u\n", set_data_len + len + 2, set_data_len_max);
 			/* Check if ad fit in the remaining buffer */
 			if ((set_data_len + len + 2) > set_data_len_max) {
 				ssize_t shortened_len = set_data_len_max -
 							(set_data_len + 2);
-
 				if (!(type == BT_DATA_NAME_COMPLETE &&
 				      shortened_len > 0)) {
 					BT_ERR("Too big advertising data");
@@ -7172,7 +7170,7 @@ int bt_le_per_adv_set_param(struct bt_le_ext_adv *adv,
 	cp->handle = adv->handle;
 	cp->min_interval = sys_cpu_to_le16(param->interval_min);
 	cp->max_interval = sys_cpu_to_le16(param->interval_max);
-
+	printk("RYOO Interval: %d \n", cp->min_interval*5/4);
 	if (param->options & BT_LE_PER_ADV_OPT_USE_TX_POWER) {
 		cp->props |= BT_HCI_LE_ADV_PROP_TX_POWER;
 	}
@@ -8299,7 +8297,6 @@ set_adv_state:
 
 	return 0;
 }
-
 static int le_ext_adv_param_set(struct bt_le_ext_adv *adv,
 				const struct bt_le_adv_param *param,
 				bool  has_scan_data)
@@ -8332,7 +8329,7 @@ static int le_ext_adv_param_set(struct bt_le_ext_adv *adv,
 	cp->handle = adv->handle;
 	sys_put_le24(param->interval_min, cp->prim_min_interval);
 	sys_put_le24(param->interval_max, cp->prim_max_interval);
-	cp->prim_channel_map = get_adv_channel_map(param->options);
+	cp->prim_channel_map = get_adv_channel_map(param->options);//CHANNELMAP DKRYOO
 	cp->filter_policy = get_filter_policy(param->options);
 	cp->tx_power = BT_HCI_LE_ADV_TX_POWER_NO_PREF;
 
@@ -8442,6 +8439,7 @@ int bt_le_adv_start_ext(struct bt_le_ext_adv *adv,
 			const struct bt_data *ad, size_t ad_len,
 			const struct bt_data *sd, size_t sd_len)
 {
+//	printk("dk ryoo ext\n");
 	struct bt_le_ext_adv_start_param start_param = {
 		.timeout = 0,
 		.num_events = 0,
@@ -8449,11 +8447,11 @@ int bt_le_adv_start_ext(struct bt_le_ext_adv *adv,
 	bool dir_adv = (param->peer != NULL);
 	struct bt_conn *conn = NULL;
 	int err;
-
+//
 	if (!atomic_test_bit(bt_dev.flags, BT_DEV_READY)) {
 		return -EAGAIN;
 	}
-
+//	printk("param: %d\n", param->options);
 	if (!valid_adv_param(param)) {
 		return -EINVAL;
 	}

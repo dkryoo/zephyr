@@ -36,6 +36,7 @@ static const struct bt_data ad[] = {
 };
 
 /* Set Scan Response data */
+
 static const struct bt_data sd[] = {
 	BT_DATA(BT_DATA_NAME_COMPLETE, DEVICE_NAME, DEVICE_NAME_LEN),
 };
@@ -77,12 +78,36 @@ static void bt_ready(int err)
 void main(void)
 {
 	int err;
+        struct bt_le_ext_adv *adv;
 
 	printk("Starting Beacon Demo\n");
 
 	/* Initialize the Bluetooth Subsystem */
-	err = bt_enable(bt_ready);
+/*	err = bt_enable(bt_ready);
+
 	if (err) {
 		printk("Bluetooth init failed (err %d)\n", err);
 	}
+*///DKRYOO
+	        /* Initialize the Bluetooth Subsystem */
+        err = bt_enable(NULL);
+        if (err) {
+                printk("Bluetooth init failed (err %d)\n", err);
+                return;
+        }
+
+        /* Create a non-connectable non-scannable advertising set */
+        err = bt_le_ext_adv_create(BT_LE_EXT_ADV_NCONN_NAME, NULL, &adv);
+        if (err) {
+                printk("Failed to create advertising set (err %d)\n", err);
+                return;
+        }
+        /* Start extended advertising */
+        err = bt_le_ext_adv_start(adv, BT_LE_EXT_ADV_START_DEFAULT);
+        if (err) {
+                printk("Failed to start extended advertising (err %d)\n", err);
+                return;
+        }       
+
 }
+

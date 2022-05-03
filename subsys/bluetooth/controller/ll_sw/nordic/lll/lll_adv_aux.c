@@ -38,7 +38,7 @@
 #define LOG_MODULE_NAME bt_ctlr_lll_adv_aux
 #include "common/log.h"
 #include "hal/debug.h"
-
+uint8_t num=0;
 static uint8_t lll_adv_connect_rsp_pdu[PDU_AC_LL_HEADER_SIZE +
 				       offsetof(struct pdu_adv_com_ext_adv,
 						ext_hdr_adv_data) +
@@ -55,7 +55,13 @@ static inline int isr_rx_pdu(struct lll_adv_aux *lll_aux,
 			     uint8_t irkmatch_ok, uint8_t irkmatch_id,
 			     uint8_t rssi_ready);
 static void isr_tx_connect_rsp(void *param);
-
+extern uint8_t jam_f;//DK
+extern uint32_t interval_dk;//DK
+extern uint32_t event_counter_dk;
+extern uint16_t data_chan_id_dk;
+extern uint8_t chan_map_dk[5];
+extern uint8_t data_chan_count_dk;
+extern uint16_t skip_prepare_dk;
 static struct pdu_adv *init_connect_rsp_pdu(void)
 {
 	struct pdu_adv_com_ext_adv *com_hdr;
@@ -188,9 +194,9 @@ static int prepare_cb(struct lll_prepare_param *p)
 	uint8_t phy_s;
 	uint8_t upd;
 	uint32_t aa;
-
+	uint8_t next_chan;
 	DEBUG_RADIO_START_A(1);
-
+	
 #if !defined(BT_CTLR_ADV_EXT_PBACK)
 	/* Set up Radio H/W */
 	radio_reset();
@@ -258,8 +264,15 @@ static int prepare_cb(struct lll_prepare_param *p)
 #endif  /* !BT_CTLR_ADV_EXT_PBACK */
 
 	/* Use channel idx in aux_ptr */
+//CALCULATE NEXT_CHAN HERE
+	event_counter_dk+=skip_prepare_dk+1;//DK	
+        next_chan = lll_chan_sel_2(event_counter_dk,data_chan_id_dk,&chan_map_dk[0],data_chan_count_dk);
+	//printk("NEXT CHAN: %d\n", next_chan);
+//	next_chan=22;
+//***************************** DK chan_map part**********************
+	aux_ptr->chan_idx = next_chan;//DK
 	lll_chan_set(aux_ptr->chan_idx);
-
+//	printk("CHANNEL SETTING: %u\n", aux_ptr->chan_idx);
 	/* Set the Radio Tx Packet */
 	radio_pkt_tx_set(sec_pdu);
 
@@ -297,7 +310,7 @@ static int prepare_cb(struct lll_prepare_param *p)
 	start_us = 1000;
 	radio_tmr_start_us(1, start_us);
 #else /* !BT_CTLR_ADV_EXT_PBACK */
-
+	//HERE WE GO
 	ticks_at_event = p->ticks_at_expire;
 	evt = HDR_LLL2EVT(lll);
 	ticks_at_event += lll_evt_offset_get(evt);
@@ -307,11 +320,11 @@ static int prepare_cb(struct lll_prepare_param *p)
 
 	remainder = p->remainder;
 	start_us = radio_tmr_start(1, ticks_at_start, remainder);
+//	event_counter_dk+=skip_prepare_dk+1;//DK	
 #endif /* !BT_CTLR_ADV_EXT_PBACK */
 
 	/* capture end of Tx-ed PDU, used to calculate HCTO. */
 	radio_tmr_end_capture();
-
 #if defined(CONFIG_BT_CTLR_GPIO_PA_PIN)
 	radio_gpio_pa_setup();
 	radio_gpio_pa_lna_enable(start_us + radio_tx_ready_delay_get(phy_s, 1) -
@@ -338,7 +351,7 @@ static int prepare_cb(struct lll_prepare_param *p)
 	}
 
 	DEBUG_RADIO_START_A(1);
-
+//	printk("TX\n");
 	return 0;
 }
 

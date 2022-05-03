@@ -47,10 +47,8 @@ static void ticker_cb(uint32_t ticks_at_expire, uint32_t remainder,
 		      uint16_t lazy, void *param);
 static void ticker_op_cb(uint32_t status, void *param);
 static void ticker_op_aux_failure(void *param);
-
 static struct ll_scan_aux_set ll_scan_aux_pool[CONFIG_BT_CTLR_SCAN_AUX_SET];
 static void *scan_aux_free;
-
 int ull_scan_aux_init(void)
 {
 	int err;
@@ -144,7 +142,6 @@ void ull_scan_aux_setup(memq_link_t *link, struct node_rx_hdr *rx)
 			/* Here we are periodic sync context */
 			rx->type = NODE_RX_TYPE_SYNC_REPORT;
 			rx->handle = ull_sync_handle_get(sync);
-
 			/* lll and aux are auxiliary channel context,
 			 * reuse the existing aux context to scan the chain.
 			 * hence lll and aux are not released or set to NULL.
@@ -224,10 +221,9 @@ void ull_scan_aux_setup(memq_link_t *link, struct node_rx_hdr *rx)
 
 	if (h->sync_info) {
 		struct pdu_adv_sync_info *si;
-
+		
 		si = (void *)ptr;
 		ptr += sizeof(*si);
-
 #if defined(CONFIG_BT_CTLR_SYNC_PERIODIC)
 		if (sync && adi && (adi->sid == scan->per_scan.sid) &&
 		    (scan->per_scan.state == LL_SYNC_STATE_ADDR_MATCH)) {
@@ -287,7 +283,6 @@ void ull_scan_aux_setup(memq_link_t *link, struct node_rx_hdr *rx)
 	aux_offset_us -= EVENT_JITTER_US;
 	aux_offset_us -= ready_delay_us;
 	aux_offset_us -= window_widening_us;
-
 	/* TODO: active_to_start feature port */
 	aux->evt.ticks_active_to_start = 0;
 	aux->evt.ticks_xtal_to_start =

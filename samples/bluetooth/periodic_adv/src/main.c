@@ -5,7 +5,6 @@
  */
 
 #include <bluetooth/bluetooth.h>
-
 static uint8_t mfg_data[] = { 0xff, 0xff, 0x00 };
 
 static const struct bt_data ad[] = {
@@ -57,15 +56,14 @@ void main(void)
 
 	while (true) {
 		k_sleep(K_SECONDS(1));
-
-		mfg_data[2]++;
-
-		printk("Set Periodic Advertising Data...");
+		//k_sleep(K_MSEC(1000));
+		mfg_data[2]++;	
+		printk("Set Periodic Advertising Data: %d \n",mfg_data[2]);
 		err = bt_le_per_adv_set_data(adv, ad, ARRAY_SIZE(ad));
 		if (err) {
 			printk("Failed (err %d)\n", err);
 			return;
 		}
-		printk("done.\n");
+		//printk("done.\n");
 	}
 }

@@ -54,7 +54,16 @@ static void sync_lost(void *param);
 
 static struct ll_sync_set ll_sync_pool[CONFIG_BT_CTLR_SCAN_SYNC_SET];
 static void *sync_free;
-
+uint32_t interval_dk; //DK
+uint32_t wpu_dk;//DK
+uint32_t offset_dk; //DK
+uint16_t event_counter_dk;
+uint16_t skip_prepare_dk;
+uint16_t data_chan_id_dk;
+uint8_t chan_map_dk[5];
+uint8_t data_chan_count_dk;
+uint32_t anchor_dk;
+//extern int NUM;
 uint8_t ll_sync_create(uint8_t options, uint8_t sid, uint8_t adv_addr_type,
 			    uint8_t *adv_addr, uint16_t skip,
 			    uint16_t sync_timeout, uint8_t sync_cte_type)
@@ -66,7 +75,6 @@ uint8_t ll_sync_create(uint8_t options, uint8_t sid, uint8_t adv_addr_type,
 	struct lll_sync *lll_sync;
 	struct ll_scan_set *scan;
 	struct ll_sync_set *sync;
-
 	scan = ull_scan_set_get(SCAN_HANDLE_1M);
 	if (!scan || scan->per_scan.sync) {
 		return BT_HCI_ERR_CMD_DISALLOWED;
@@ -348,7 +356,6 @@ void ull_sync_setup(struct ll_scan_set *scan, struct ll_scan_aux_set *aux,
 	uint16_t interval;
 	uint32_t ret;
 	uint8_t sca;
-
 	sync = scan->per_scan.sync;
 	scan->per_scan.sync = NULL;
 	if (IS_ENABLED(CONFIG_BT_CTLR_PHY_CODED)) {
@@ -373,16 +380,24 @@ void ull_sync_setup(struct ll_scan_set *scan, struct ll_scan_aux_set *aux,
 	if (lll->data_chan_count < 2) {
 		return;
 	}
-
 	memcpy(lll->access_addr, &si->aa, sizeof(lll->access_addr));
 	memcpy(lll->crc_init, si->crc_init, sizeof(lll->crc_init));
 	lll->event_counter = si->evt_cntr;
+//DK START
+	event_counter_dk=lll->event_counter+lll->skip_prepare;
+	skip_prepare_dk=lll->skip_prepare;
+	data_chan_id_dk=lll->data_chan_id;
+	for(int i=0; i<5;i++)
+	chan_map_dk[i]=lll->data_chan_map[i];
+	data_chan_count_dk=lll->data_chan_count;
+//DK END
+
 	lll->phy = aux->lll.phy;
 
 	sca = si->sca_chm[4] >> 5;
 	interval = sys_le16_to_cpu(si->interval);
 	interval_us = interval * CONN_INT_UNIT_US;
-
+	interval_dk = interval_us;//DK
 	sync->timeout_reload = RADIO_SYNC_EVENTS((sync->timeout * 10U * 1000U),
 						 interval_us);
 
@@ -422,9 +437,7 @@ void ull_sync_setup(struct ll_scan_set *scan, struct ll_scan_aux_set *aux,
 	sync_offset_us -= EVENT_OVERHEAD_START_US;
 	sync_offset_us -= EVENT_JITTER_US;
 	sync_offset_us -= ready_delay_us;
-
-	interval_us -= lll->window_widening_periodic_us;
-
+	interval_us -= lll->window_widening_periodic_us; 
 	/* TODO: active_to_start feature port */
 	sync->evt.ticks_active_to_start = 0U;
 	sync->evt.ticks_xtal_to_start =
@@ -446,11 +459,15 @@ void ull_sync_setup(struct ll_scan_set *scan, struct ll_scan_aux_set *aux,
 	} else {
 		ticks_slot_overhead = 0U;
 	}
+	anchor_dk= ftr->ticks_anchor - ticks_slot_offset+HAL_TICKER_US_TO_TICKS(interval_us);//DK -3000!!
+        wpu_dk=lll->window_widening_periodic_us;//DK
+//	printk("WPU_DK: %u\n",wpu_dk);
+        offset_dk = HAL_TICKER_US_TO_TICKS(sync_offset_us);//DK
 
 	ret = ticker_start(TICKER_INSTANCE_ID_CTLR, TICKER_USER_ID_ULL_HIGH,
 			   (TICKER_ID_SCAN_SYNC_BASE + sync_handle),
-			   ftr->ticks_anchor - ticks_slot_offset,
-			   HAL_TICKER_US_TO_TICKS(sync_offset_us),
+			   anchor_dk,
+			   offset_dk,
 			   HAL_TICKER_US_TO_TICKS(interval_us),
 			   HAL_TICKER_REMAINDER(interval_us),
 			   TICKER_NULL_LAZY,
@@ -596,6 +613,7 @@ static void ticker_cb(uint32_t ticks_at_expire, uint32_t remainder,
 	lll = &sync->lll;
 
 	/* Increment prepare reference count */
+
 	ref = ull_ref_inc(&sync->ull);
 	LL_ASSERT(ref);
 

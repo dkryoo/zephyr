@@ -25,7 +25,7 @@ uint8_t lll_chan_sel_1(uint8_t *chan_use, uint8_t hop, uint16_t latency, uint8_t
 		    uint8_t chan_count)
 {
 	uint8_t chan_next;
-
+//	printk("CHAN1\n");
 	chan_next = ((*chan_use) + (hop * (1 + latency))) % 37;
 	*chan_use = chan_next;
 
@@ -49,7 +49,7 @@ uint8_t lll_chan_sel_2(uint16_t counter, uint16_t chan_id, uint8_t *chan_map,
 {
 	uint8_t chan_next;
 	uint16_t prn_e;
-
+//	printk("CHAN2\n");
 	prn_e = chan_prn(counter, chan_id);
 	chan_next = prn_e % 37;
 

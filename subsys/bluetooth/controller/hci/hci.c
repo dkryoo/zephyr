@@ -4710,8 +4710,22 @@ static void le_ext_adv_report(struct pdu_data *pdu_data,
 			ptr += sizeof(*si);
 
 			interval_le16 = si->interval;
-
-			BT_DBG("    SyncInfo offs = %u, offs_unit = 0x%x, "
+/*			printk("    SyncInfo offs = %u, offs_unit = 0x%x, "
+                               "interval = 0x%x, sca = 0x%x, "
+                               "chan map = 0x%x 0x%x 0x%x 0x%x 0x%x, "
+                               "AA = 0x%x, CRC = 0x%x 0x%x 0x%x, "
+                               "evt cntr = 0x%x",
+                               sys_le16_to_cpu(si->offs),
+                               si->offs_units,
+                               sys_le16_to_cpu(si->interval),
+                               (si->sca_chm[4] >> 5),
+                               si->sca_chm[0], si->sca_chm[1], si->sca_chm[2],
+                               si->sca_chm[3], (si->sca_chm[4] & 0x3F),
+                               sys_le32_to_cpu(si->aa),
+                               si->crc_init[0], si->crc_init[1],
+                               si->crc_init[2], sys_le16_to_cpu(si->evt_cntr));
+*/
+/*			BT_DBG("    SyncInfo offs = %u, offs_unit = 0x%x, "
 			       "interval = 0x%x, sca = 0x%x, "
 			       "chan map = 0x%x 0x%x 0x%x 0x%x 0x%x, "
 			       "AA = 0x%x, CRC = 0x%x 0x%x 0x%x, "
@@ -4725,6 +4739,7 @@ static void le_ext_adv_report(struct pdu_data *pdu_data,
 			       sys_le32_to_cpu(si->aa),
 			       si->crc_init[0], si->crc_init[1],
 			       si->crc_init[2], sys_le16_to_cpu(si->evt_cntr));
+*/
 		}
 
 		if (h->tx_pwr) {

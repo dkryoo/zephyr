@@ -55,7 +55,10 @@ static void ticker_op_cb(uint32_t status, void *param);
 static struct ll_adv_aux_set ll_adv_aux_pool[CONFIG_BT_CTLR_ADV_AUX_SET];
 static void *adv_aux_free;
 #endif /* (CONFIG_BT_CTLR_ADV_AUX_SET > 0) */
-
+extern uint32_t anchor_dk;
+extern uint32_t interval_dk;
+extern uint32_t offset_dk;
+extern uint32_t wpu_dk;
 uint8_t ll_adv_aux_random_addr_set(uint8_t handle, uint8_t const *const addr)
 {
 	struct ll_adv_set *adv;
@@ -128,7 +131,6 @@ uint8_t ll_adv_aux_ad_data_set(uint8_t handle, uint8_t op, uint8_t frag_pref, ui
 	if (!adv->lll.aux) {
 		return 0;
 	}
-
 	if (adv->is_enabled) {
 		struct ll_adv_aux_set *aux;
 
@@ -138,16 +140,16 @@ uint8_t ll_adv_aux_ad_data_set(uint8_t handle, uint8_t op, uint8_t frag_pref, ui
 			uint32_t ticks_anchor;
 			uint32_t ret;
 
-			aux->interval =	adv->interval +
-					(HAL_TICKER_TICKS_TO_US(
-						ULL_ADV_RANDOM_DELAY) /
-						ADV_INT_UNIT_US);
+			aux->interval =	adv->interval; 
+//					(HAL_TICKER_TICKS_TO_US(
+//						ULL_ADV_RANDOM_DELAY) /
+//						ADV_INT_UNIT_US);
 
 			/* FIXME: Find absolute ticks until after primary PDU
 			 *        on air to place the auxiliary advertising PDU.
 			 */
-			ticks_anchor = ticker_ticks_now_get();
-
+//			ticks_anchor = ticker_ticks_now_get();
+			ticks_anchor = anchor_dk;
 			ticks_slot_overhead = ull_adv_aux_evt_init(aux);
 
 			ret = ull_adv_aux_start(aux, ticks_anchor,
@@ -832,7 +834,7 @@ uint32_t ull_adv_aux_evt_init(struct ll_adv_aux_set *aux)
 	} else {
 		ticks_slot_overhead = 0;
 	}
-
+//	printk("%u\n", ticks_slot_overhead);//DK
 	return ticks_slot_overhead;
 }
 
@@ -842,11 +844,13 @@ uint32_t ull_adv_aux_start(struct ll_adv_aux_set *aux, uint32_t ticks_anchor,
 	uint32_t volatile ret_cb;
 	uint8_t aux_handle;
 	uint32_t ret;
-
+	uint32_t interval_use;
 	ull_hdr_init(&aux->ull);
 	aux_handle = ull_adv_aux_handle_get(aux);
 
 	ret_cb = TICKER_STATUS_BUSY;
+	interval_use=interval_dk-wpu_dk;
+/*
 	ret = ticker_start(TICKER_INSTANCE_ID_CTLR, TICKER_USER_ID_THREAD,
 			   (TICKER_ID_ADV_AUX_BASE + aux_handle),
 			   ticks_anchor, 0,
@@ -856,6 +860,16 @@ uint32_t ull_adv_aux_start(struct ll_adv_aux_set *aux, uint32_t ticks_anchor,
 			   (aux->evt.ticks_slot + ticks_slot_overhead),
 			   ticker_cb, aux,
 			   ull_ticker_status_give, (void *)&ret_cb);
+*/
+        ret = ticker_start(TICKER_INSTANCE_ID_CTLR, TICKER_USER_ID_THREAD,
+                           (TICKER_ID_ADV_AUX_BASE + aux_handle),
+                           ticks_anchor, offset_dk,
+                           HAL_TICKER_US_TO_TICKS(interval_use),
+                           HAL_TICKER_REMAINDER(interval_use), TICKER_NULL_LAZY,
+                           (aux->evt.ticks_slot + ticks_slot_overhead),
+                           ticker_cb, aux,
+                           ull_ticker_status_give, (void *)&ret_cb);
+
 	ret = ull_ticker_status_take(ret, &ret_cb);
 
 	return ret;

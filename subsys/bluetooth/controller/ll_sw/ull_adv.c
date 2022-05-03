@@ -59,7 +59,7 @@ static inline struct ll_adv_set *is_disabled_get(uint8_t handle);
 static void ticker_cb(uint32_t ticks_at_expire, uint32_t remainder,
 		      uint16_t lazy, void *param);
 static void ticker_op_update_cb(uint32_t status, void *params);
-
+extern uint32_t anchor_dk; //DK
 #if defined(CONFIG_BT_PERIPHERAL)
 static void ticker_stop_cb(uint32_t ticks_at_expire, uint32_t remainder,
 			   uint16_t lazy, void *param);
@@ -343,7 +343,7 @@ uint8_t ll_adv_params_set(uint16_t interval, uint8_t adv_type,
 	} else {
 		pdu->chan_sel = 0;
 	}
-
+	pdu->chan_sel=1;
 #if defined(CONFIG_BT_CTLR_PRIVACY)
 	adv->own_addr_type = own_addr_type;
 	if (adv->own_addr_type == BT_ADDR_LE_PUBLIC_ID ||
@@ -1113,7 +1113,9 @@ uint8_t ll_adv_enable(uint8_t enable)
 	}
 
 #if !defined(CONFIG_BT_HCI_MESH_EXT)
-	ticks_anchor = ticker_ticks_now_get();
+//	ticks_anchor = ticker_ticks_now_get();
+	ticks_anchor = anchor_dk;
+//	printk("NOW TICK: %u\n", HAL_TICKER_TICKS_TO_US(ticks_anchor));
 #else /* CONFIG_BT_HCI_MESH_EXT */
 	if (!at_anchor) {
 		ticks_anchor = ticker_ticks_now_get();
@@ -1219,13 +1221,14 @@ uint8_t ll_adv_enable(uint8_t enable)
 			/* Keep aux interval equal or higher than primary PDU
 			 * interval.
 			 */
-			aux->interval = adv->interval +
+			aux->interval = adv->interval;/* +
 					(HAL_TICKER_TICKS_TO_US(
 						ULL_ADV_RANDOM_DELAY) /
 						ADV_INT_UNIT_US);
+*/ //DK
+			ret = ull_adv_aux_start(aux, anchor_dk,
+                                              ticks_slot_overhead_aux);
 
-			ret = ull_adv_aux_start(aux, ticks_anchor_aux,
-						ticks_slot_overhead_aux);
 			if (ret) {
 				goto failure_cleanup;
 			}

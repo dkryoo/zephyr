@@ -57,7 +57,7 @@ static struct ll_adv_sync_set ll_adv_sync_pool[CONFIG_BT_CTLR_ADV_SYNC_SET];
 static void *adv_sync_free;
 
 uint8_t ll_adv_sync_param_set(uint8_t handle, uint16_t interval, uint16_t flags)
-{
+{//DKRYOO
 	struct pdu_adv_ext_hdr *ter_hdr, ter_hdr_prev;
 	struct pdu_adv_com_ext_adv *ter_com_hdr;
 	uint8_t *ter_dptr_prev, *ter_dptr;
@@ -478,7 +478,7 @@ uint32_t ull_adv_sync_start(struct ll_adv_sync_set *sync,
 		ticks_slot_overhead = 0;
 	}
 
-	interval_us = (uint32_t)sync->interval * CONN_INT_UNIT_US;
+	interval_us = (uint32_t)sync->interval * ADV_INT_UNIT_US;
 
 	sync_handle = sync_handle_get(sync);
 
