@@ -66,8 +66,8 @@ extern "C" {
 #define BT_LE_AD_NO_BREDR               0x04 /* BR/EDR not supported */
 
 /* Defined GAP timers */
-#define BT_GAP_SCAN_FAST_INTERVAL               0x0060  /* 60 ms    */
-#define BT_GAP_SCAN_FAST_WINDOW                 0x0030  /* 30 ms    */
+#define BT_GAP_SCAN_FAST_INTERVAL               0x0010  /* 10 ms    */
+#define BT_GAP_SCAN_FAST_WINDOW                 0x0010  /* 10 ms    */
 #define BT_GAP_SCAN_SLOW_INTERVAL_1             0x0800  /* 1.28 s   */
 #define BT_GAP_SCAN_SLOW_WINDOW_1               0x0012  /* 11.25 ms */
 #define BT_GAP_SCAN_SLOW_INTERVAL_2             0x1000  /* 2.56 s   */
@@ -86,6 +86,8 @@ extern "C" {
 #define BT_GAP_PER_ADV_SLOW_INT_MAX             0x03C0  /* 1.2 s    */
 #define BT_GAP_INIT_CONN_INT_MIN                0x0018  /* 30 ms    */
 #define BT_GAP_INIT_CONN_INT_MAX                0x0028  /* 50 ms    */
+#define BT_GAP_PER_ADV_SLOW_INT_DK             0x0020  /* 40 ms      */
+
 
 /** LE PHY types */
 enum {
