@@ -857,8 +857,9 @@ struct bt_le_per_adv_param {
 		BT_LE_PER_ADV_PARAM_INIT(_int_min, _int_max, _options) \
 	})
 
-#define BT_LE_PER_ADV_DEFAULT BT_LE_PER_ADV_PARAM(BT_GAP_PER_ADV_SLOW_INT_DK, \
-						  BT_GAP_PER_ADV_SLOW_INT_DK, \
+//BT_GAP_PER_ADV_SLOW_INT_DK, 
+#define BT_LE_PER_ADV_DEFAULT BT_LE_PER_ADV_PARAM(BT_GAP_PER_ADV_SLOW_INT_MIN, \
+						  BT_GAP_PER_ADV_SLOW_INT_MIN, \
 						  BT_LE_PER_ADV_OPT_NONE)
 
 /**
@@ -1819,7 +1820,7 @@ struct bt_le_scan_cb {
  * @brief Helper macro to enable active scanning to discover new devices.
  */
 #define BT_LE_SCAN_ACTIVE BT_LE_SCAN_PARAM(BT_LE_SCAN_TYPE_ACTIVE, \
-					   BT_LE_SCAN_OPT_NONE, \
+					   BT_LE_SCAN_OPT_FILTER_DUPLICATE, \
 					   BT_GAP_SCAN_FAST_INTERVAL, \
 					   BT_GAP_SCAN_FAST_WINDOW)
 

@@ -62,7 +62,6 @@ void main(void)
 		printk("done.\n");
 	while (true) {
 
-//		for (int i = 0; i < 3; i++) {
 			k_sleep(K_SECONDS(1));
 
 			mfg_data[2]++;
@@ -76,9 +75,6 @@ void main(void)
 			printk("done.\n");
 		}
 
-//		k_sleep(K_SECONDS(10));
-
-//		printk("Stop Extended Advertising...");
 		err = bt_le_ext_adv_stop(adv);
 		if (err) {
 			printk("Failed to stop extended advertising "
@@ -87,6 +83,5 @@ void main(void)
 		}
 		printk("done.\n");
 
-//		k_sleep(K_SECONDS(10));
 	
 }

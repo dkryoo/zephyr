@@ -171,6 +171,7 @@ static int prepare_cb(struct lll_prepare_param *p)
 	radio_aa_set(lll->access_addr);
 	radio_crc_configure(PDU_CRC_POLYNOMIAL,
 				sys_get_le24(lll->crc_init));
+//	printk("NEXT CHAN: %d\n", data_chan_use);
 	lll_chan_set(data_chan_use);
 
 	upd = 0U;
