@@ -19,7 +19,7 @@ static uint8_t      per_sid;
 static K_SEM_DEFINE(sem_per_adv, 0, 1);
 static K_SEM_DEFINE(sem_per_sync, 0, 1);
 static K_SEM_DEFINE(sem_per_sync_lost, 0, 1);
-
+	int count=0;
 /* The devicetree node identifier for the "led0" alias. */
 
 static bool data_cb(struct bt_data *data, void *user_data)
@@ -132,6 +132,7 @@ static void recv_cb(struct bt_le_per_adv_sync *sync,
 	       "RSSI %i, CTE %u, data length %u, data: %s\n",
 	       bt_le_per_adv_sync_get_index(sync), le_addr, info->tx_power,
 	       info->rssi, info->cte_type, buf->len, data_str);
+	count=count+1;
 }
 
 static struct bt_le_per_adv_sync_cb sync_callbacks = {
@@ -142,6 +143,7 @@ static struct bt_le_per_adv_sync_cb sync_callbacks = {
 
 void main(void)
 {
+
 	struct bt_le_per_adv_sync_param sync_create_param;
 	struct bt_le_per_adv_sync *sync;
 	int err;
@@ -171,6 +173,9 @@ void main(void)
 	}
 	printk("success.\n");
 
+
+
+	printk("receive enabled.\n");
 	do {
 		printk("Waiting for periodic advertising...\n");
 		per_adv_found = false;
@@ -183,7 +188,7 @@ void main(void)
 
 		printk("Creating Periodic Advertising Sync...");
 		bt_addr_le_copy(&sync_create_param.addr, &per_addr);
-		sync_create_param.options = 0;
+		sync_create_param.options = BT_LE_PER_ADV_SYNC_OPT_FILTER_DUPLICATE;
 		sync_create_param.sid = per_sid;
 		sync_create_param.skip = 0;
 		sync_create_param.timeout = 0xa;
@@ -208,13 +213,20 @@ void main(void)
 			continue;
 		}
 		printk("Periodic sync established.\n");
-
-		printk("Waiting for periodic sync lost...\n");
+		/*
+		printk("Periodic sync receive enable...\n");
+		err = bt_le_per_adv_sync_recv_enable(sync);
+		if (err) {
+			printk("failed (err %d)\n", err);
+			return;
+		}
+		*/
 		err = k_sem_take(&sem_per_sync_lost, K_FOREVER);
 		if (err) {
 			printk("failed (err %d)\n", err);
 			return;
 		}
 		printk("Periodic sync lost.\n");
+		printk("COUNT: %d", count);
 	} while (true);
 }

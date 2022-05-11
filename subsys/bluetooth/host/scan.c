@@ -1549,7 +1549,6 @@ static int bt_le_set_per_adv_recv_enable(
 	if (!atomic_test_bit(per_adv_sync->flags, BT_PER_ADV_SYNC_SYNCED)) {
 		return -EINVAL;
 	}
-
 	if ((enable && !atomic_test_bit(per_adv_sync->flags,
 					BT_PER_ADV_SYNC_RECV_DISABLED)) ||
 	    (!enable && atomic_test_bit(per_adv_sync->flags,

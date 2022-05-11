@@ -163,7 +163,8 @@ void lll_sync_aux_prepare_cb(struct lll_sync *lll,
 				sys_get_le24(lll->crc_init));
 
 	lll_chan_set(lll_aux->chan);
-
+//	lll_chan_set(4);
+	
 	radio_isr_set(isr_rx_aux_chain, lll);
 
 #if defined(CONFIG_BT_CTLR_DF_SCAN_CTE_RX)

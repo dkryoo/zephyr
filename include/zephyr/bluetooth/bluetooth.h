@@ -1820,7 +1820,7 @@ struct bt_le_scan_cb {
  * @brief Helper macro to enable active scanning to discover new devices.
  */
 #define BT_LE_SCAN_ACTIVE BT_LE_SCAN_PARAM(BT_LE_SCAN_TYPE_ACTIVE, \
-					   BT_LE_SCAN_OPT_FILTER_DUPLICATE, \
+					   BT_LE_SCAN_OPT_NONE, \
 					   BT_GAP_SCAN_FAST_INTERVAL, \
 					   BT_GAP_SCAN_FAST_WINDOW)
 

@@ -6,7 +6,7 @@
 
 #include <bluetooth/bluetooth.h>
 
-uint8_t mfg_data[80];// = { 0xff, 0xff, 0x00 };
+uint8_t mfg_data[80]; //= { 0xff, 0xff, 0x00 };
 /*
 static const struct bt_data ad[] = {
 	BT_DATA(BT_DATA_MANUFACTURER_DATA, mfg_data, 3),
@@ -16,11 +16,13 @@ void main(void)
 {
 	struct bt_le_ext_adv *adv;
 	int err;
+	
 	for(int i=0; i<sizeof(mfg_data);i++)
 	mfg_data[i]=i;
 	struct bt_data ad[] = {
     BT_DATA(BT_DATA_MANUFACTURER_DATA, mfg_data, sizeof(mfg_data)),
 	};
+	
 	printk("Starting Periodic Advertising Demo\n");
 
 	/* Initialize the Bluetooth Subsystem */
@@ -51,15 +53,12 @@ void main(void)
 		printk("Failed to enable periodic advertising (err %d)\n", err);
 		return;
 	}
-
-		printk("Start Extended Advertising...");
 		err = bt_le_ext_adv_start(adv, BT_LE_EXT_ADV_START_DEFAULT);
 		if (err) {
 			printk("Failed to start extended advertising "
 			       "(err %d)\n", err);
 			return;
 		}
-		printk("done.\n");
 	while (true) {
 
 			k_sleep(K_SECONDS(1));
@@ -74,14 +73,4 @@ void main(void)
 			}
 			printk("done.\n");
 		}
-
-		err = bt_le_ext_adv_stop(adv);
-		if (err) {
-			printk("Failed to stop extended advertising "
-			       "(err %d)\n", err);
-			return;
-		}
-		printk("done.\n");
-
-	
 }
