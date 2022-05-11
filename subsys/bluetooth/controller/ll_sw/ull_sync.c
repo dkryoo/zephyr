@@ -93,6 +93,16 @@ static void *sync_free;
 /* Semaphore to wakeup thread on ticker API callback */
 static struct k_sem sem_ticker_cb;
 #endif /* CONFIG_BT_CTLR_DF_SCAN_CTE_RX */
+//DKRYOO
+uint32_t interval_dk; //DK
+uint32_t wpu_dk;//DK
+uint32_t offset_dk; //DK
+uint16_t event_counter_dk;
+uint16_t skip_prepare_dk;
+uint16_t data_chan_id_dk;
+uint8_t chan_map_dk[5];
+uint8_t data_chan_count_dk;
+uint32_t anchor_dk;
 
 uint8_t ll_sync_create(uint8_t options, uint8_t sid, uint8_t adv_addr_type,
 			    uint8_t *adv_addr, uint16_t skip,
@@ -636,8 +646,18 @@ void ull_sync_setup(struct ll_scan_set *scan, struct ll_scan_aux_set *aux,
 	lll->event_counter = si->evt_cntr;
 	lll->phy = aux->lll.phy;
 
+//DK START
+	event_counter_dk=lll->event_counter+lll->skip_prepare;
+	skip_prepare_dk=lll->skip_prepare;
+	data_chan_id_dk=lll->data_chan_id;
+	for(int i=0; i<5;i++)
+	chan_map_dk[i]=data_chan_map[i];
+	data_chan_count_dk=lll->chm[chm_last].data_chan_count;
+//DK END
+
 	interval = sys_le16_to_cpu(si->interval);
 	interval_us = interval * PERIODIC_INT_UNIT_US;
+	interval_dk = interval_us;//DK
 
 	/* Convert fromm 10ms units to interval units */
 	sync->timeout_reload = RADIO_SYNC_EVENTS((sync->timeout * 10U *
@@ -736,13 +756,17 @@ void ull_sync_setup(struct ll_scan_set *scan, struct ll_scan_aux_set *aux,
 		ticks_slot_overhead = 0U;
 	}
 	ticks_slot_offset += HAL_TICKER_US_TO_TICKS(EVENT_OVERHEAD_START_US);
-
+//DK START
+	anchor_dk= ftr->ticks_anchor - ticks_slot_offset+HAL_TICKER_US_TO_TICKS(interval_us);
+    wpu_dk=lll->window_widening_periodic_us;//DK
+    offset_dk = HAL_TICKER_US_TO_TICKS(sync_offset_us);//DK
+//DK END
 	sync->lll_sync_prepare = lll_sync_create_prepare;
 
 	ret = ticker_start(TICKER_INSTANCE_ID_CTLR, TICKER_USER_ID_ULL_HIGH,
 			   (TICKER_ID_SCAN_SYNC_BASE + sync_handle),
 			   ftr->ticks_anchor - ticks_slot_offset,
-			   HAL_TICKER_US_TO_TICKS(sync_offset_us),
+				offset_dk,
 			   HAL_TICKER_US_TO_TICKS(interval_us),
 			   HAL_TICKER_REMAINDER(interval_us),
 			   TICKER_NULL_LAZY,

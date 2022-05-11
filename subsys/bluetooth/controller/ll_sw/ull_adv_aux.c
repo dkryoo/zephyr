@@ -46,6 +46,11 @@
 #define LOG_MODULE_NAME bt_ctlr_ull_adv_aux
 #include "common/log.h"
 #include "hal/debug.h"
+//DK
+extern uint32_t anchor_dk;
+extern uint32_t interval_dk;
+extern uint32_t offset_dk;
+extern uint32_t wpu_dk;
 
 static int init_reset(void);
 
@@ -166,8 +171,8 @@ uint8_t ll_adv_aux_ad_data_set(uint8_t handle, uint8_t op, uint8_t frag_pref,
 			 *       Advertising sets are non-overlapping
 			 *       for the same event interval.
 			 */
-			ticks_anchor = ticker_ticks_now_get();
-
+//			ticks_anchor = ticker_ticks_now_get(); 
+			ticks_anchor = anchor_dk; //DK
 			ticks_slot_overhead = ull_adv_aux_evt_init(aux);
 
 			ret = ull_adv_aux_start(aux, ticks_anchor,
@@ -1066,16 +1071,16 @@ uint32_t ull_adv_aux_start(struct ll_adv_aux_set *aux, uint32_t ticks_anchor,
 			   uint32_t ticks_slot_overhead)
 {
 	uint32_t volatile ret_cb;
-	uint32_t interval_us;
 	uint8_t aux_handle;
 	uint32_t ret;
-
-	interval_us = aux->interval * PERIODIC_INT_UNIT_US;
+	uint32_t interval_use;//DK
 
 	ull_hdr_init(&aux->ull);
 	aux_handle = ull_adv_aux_handle_get(aux);
 
 	ret_cb = TICKER_STATUS_BUSY;
+	interval_use=interval_dk-wpu_dk; //DK
+/*
 	ret = ticker_start(TICKER_INSTANCE_ID_CTLR, TICKER_USER_ID_THREAD,
 			   (TICKER_ID_ADV_AUX_BASE + aux_handle),
 			   ticks_anchor, 0,
@@ -1084,6 +1089,16 @@ uint32_t ull_adv_aux_start(struct ll_adv_aux_set *aux, uint32_t ticks_anchor,
 			   (aux->ull.ticks_slot + ticks_slot_overhead),
 			   ticker_cb, aux,
 			   ull_ticker_status_give, (void *)&ret_cb);
+	*/
+	ret = ticker_start(TICKER_INSTANCE_ID_CTLR, TICKER_USER_ID_THREAD,
+		(TICKER_ID_ADV_AUX_BASE + aux_handle),
+		ticks_anchor, offset_dk,
+		HAL_TICKER_US_TO_TICKS(interval_use),
+		HAL_TICKER_REMAINDER(interval_use), TICKER_NULL_LAZY,
+		(aux->ull.ticks_slot + ticks_slot_overhead),
+		ticker_cb, aux,
+		ull_ticker_status_give, (void *)&ret_cb);
+
 	ret = ull_ticker_status_take(ret, &ret_cb);
 
 	return ret;

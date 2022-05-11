@@ -62,6 +62,14 @@ static struct pdu_adv *init_connect_rsp_pdu(struct pdu_adv *pdu_ci);
 static void isr_tx_connect_rsp(void *param);
 #endif /* CONFIG_BT_PERIPHERAL */
 
+extern uint32_t interval_dk;//DK
+extern uint32_t event_counter_dk;
+extern uint16_t data_chan_id_dk;
+extern uint8_t chan_map_dk[5];
+extern uint8_t data_chan_count_dk;
+extern uint16_t skip_prepare_dk;
+uint8_t next_chan;//DK
+
 int lll_adv_aux_init(void)
 {
 	int err;
@@ -201,9 +209,11 @@ static int prepare_cb(struct lll_prepare_param *p)
 	radio_crc_configure(PDU_CRC_POLYNOMIAL,
 					PDU_AC_CRC_IV);
 
-	/* Use channel idx in aux_ptr */
+	event_counter_dk+=skip_prepare_dk+1;//DK	
+    next_chan = lll_chan_sel_2(event_counter_dk,data_chan_id_dk,&chan_map_dk[0],data_chan_count_dk);
+		/* Use channel idx in aux_ptr */
+	aux_ptr->chan_idx = next_chan;//DK
 	lll_chan_set(aux_ptr->chan_idx);
-
 	/* Set the Radio Tx Packet */
 	radio_pkt_tx_set(sec_pdu);
 

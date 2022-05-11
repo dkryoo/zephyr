@@ -54,7 +54,7 @@ static const char *phy2str(uint8_t phy)
 }
 struct bt_le_scan_param scan_param = {
                 .type       = 0x00,
-                .options    = BT_LE_SCAN_OPT_CODED,
+                .options    = BT_LE_SCAN_OPT_NONE,
                 .interval   = 0x0010,
                 .window     = 0x0010,
         };
@@ -150,7 +150,7 @@ void main(void)
 	struct bt_data ad[] = {
         BT_DATA(BT_DATA_MANUFACTURER_DATA, mfg_data, sizeof(mfg_data)),
 	};
-
+	printk("DATA SET DK\n");
 	/* Initialize the Bluetooth Subsystem */
 	err = bt_enable(NULL);
 	if (err) {
@@ -166,7 +166,6 @@ void main(void)
 	bt_le_per_adv_sync_cb_register(&sync_callbacks);
 	printk("Success.\n");
 
-	printk("Start scanning...");
 	err = bt_le_ext_adv_create(jam_param, NULL, &adv);
         if (err) {
                 printk("Failed to create advertising set (err %d)\n", err);
@@ -174,6 +173,7 @@ void main(void)
         }  
 do{
 	//SCAN START
+	printk("Start scanning...");
         err = bt_le_scan_start(&scan_param, NULL);
         if (err) {
                 printk("Starting scanning failed (err %d)\n", err);
@@ -204,13 +204,10 @@ do{
 		return;
         }
 	//JAM PARAMETER UPDATE
-/*
-	jam_param->interval_min = interval_dk*8/5000;
-        jam_param->interval_max = interval_dk*8/5000;
-	bt_le_ext_adv_update_param(adv,jam_param);
-*/
+
 	bt_le_ext_adv_set_data(adv, ad, ARRAY_SIZE(ad), NULL, 0);
 	//JAMMING START for 10 seconds
+	printk("JAMMER START\n");
         err = bt_le_ext_adv_start(adv, BT_LE_EXT_ADV_START_DEFAULT);
 	if(err){
 	printk("Starting Jamming failed (Err%d)\n", err);

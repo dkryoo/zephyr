@@ -60,7 +60,7 @@
 #if !defined(CONFIG_BT_LL_SW_LLCP_LEGACY)
 #include "ll_sw/ull_llcp.h"
 #endif /* !CONFIG_BT_LL_SW_LLCP_LEGACY */
-
+extern uint32_t anchor_dk;
 #define BT_DBG_ENABLED IS_ENABLED(CONFIG_BT_DEBUG_HCI_DRIVER)
 #define LOG_MODULE_NAME bt_ctlr_ull_adv
 #include "common/log.h"
@@ -1282,7 +1282,8 @@ uint8_t ll_adv_enable(uint8_t enable)
 	}
 
 #if !defined(CONFIG_BT_HCI_MESH_EXT)
-	ticks_anchor = ticker_ticks_now_get();
+	//ticks_anchor = ticker_ticks_now_get();
+	ticks_anchor=anchor_dk;//DK
 #else /* CONFIG_BT_HCI_MESH_EXT */
 	if (!at_anchor) {
 		ticks_anchor = ticker_ticks_now_get();
@@ -1445,7 +1446,7 @@ uint8_t ll_adv_enable(uint8_t enable)
 							ULL_ADV_RANDOM_DELAY),
 						 PERIODIC_INT_UNIT_US);
 
-			ret = ull_adv_aux_start(aux, ticks_anchor_aux,
+			ret = ull_adv_aux_start(aux, anchor_dk,
 						ticks_slot_overhead_aux);
 			if (ret) {
 				goto failure_cleanup;
