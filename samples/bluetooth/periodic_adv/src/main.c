@@ -3,26 +3,42 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-
 #include <bluetooth/bluetooth.h>
-
-uint8_t mfg_data[80]; //= { 0xff, 0xff, 0x00 };
+uint8_t mfg_data[200]; //= { 0xff, 0xff, 0x00 };
+extern uint16_t COUNT_DK;
 /*
 static const struct bt_data ad[] = {
 	BT_DATA(BT_DATA_MANUFACTURER_DATA, mfg_data, 3),
 };
+*/
+/*
+static void adv_sent_cb(struct bt_le_ext_adv *adv,
+			struct bt_le_ext_adv_sent_info *info);
+
+static struct bt_le_ext_adv_cb adv_callbacks = {
+	.sent = adv_sent_cb,
+};
+static void adv_sent_cb(struct bt_le_ext_adv *adv,
+			struct bt_le_ext_adv_sent_info *info)
+{
+	printk("Advertiser[%d] %p sent %d\n", bt_le_ext_adv_get_index(adv),
+	       adv, info->num_sent);
+}
 */
 void main(void)
 {
 	struct bt_le_ext_adv *adv;
 	int err;
 	
-	for(int i=0; i<sizeof(mfg_data);i++)
+	for(int i=0; i<sizeof(mfg_data);i++){
+    if(i<256)
 	mfg_data[i]=i;
+	else
+	mfg_data[i]=400-i;
+	}
 	struct bt_data ad[] = {
     BT_DATA(BT_DATA_MANUFACTURER_DATA, mfg_data, sizeof(mfg_data)),
 	};
-	
 	printk("Starting Periodic Advertising Demo\n");
 
 	/* Initialize the Bluetooth Subsystem */
@@ -61,11 +77,19 @@ void main(void)
 		}
 	while (true) {
 
-			k_sleep(K_SECONDS(1));
+			k_sleep(K_MSEC(8));
 
-			mfg_data[2]++;
-
-			printk("Set Periodic Advertising Data...");
+			mfg_data[0]=(uint8_t)(COUNT_DK & 0x00FF);
+			mfg_data[1]=(uint8_t)((COUNT_DK & 0xFF00) >>8);
+//			printk("COUNT: %u, DATA: %u, %u \n", COUNT_DK, mfg_data[0], mfg_data[1]);
+//			printk("Set Periodic Advertising Data... ");
+//			printk("DATA[0] %d, DATA[1] %d, [DATA2] %d\n", mfg_data[0], mfg_data[1],mfg_data[2]);
+/* //CHECK DATA!!!
+			for(int i=0; i<ad[0].data_len;i++){
+				printk("DATA[%d] %u  ", i,ad[0].data[i]);
+			}
+			printk("\n");
+*/
 			err = bt_le_per_adv_set_data(adv, ad, ARRAY_SIZE(ad));
 			if (err) {
 				printk("Failed (err %d)\n", err);
@@ -73,4 +97,5 @@ void main(void)
 			}
 			printk("done.\n");
 		}
+	bt_le_per_adv_stop(adv);
 }

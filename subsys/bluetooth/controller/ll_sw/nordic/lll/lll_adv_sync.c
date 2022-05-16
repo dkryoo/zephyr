@@ -43,7 +43,7 @@
 #define LOG_MODULE_NAME bt_ctlr_lll_adv_sync
 #include "common/log.h"
 #include "hal/debug.h"
-
+uint16_t COUNT_DK=0;
 static int init_reset(void);
 static int prepare_cb(struct lll_prepare_param *p);
 static void abort_cb(struct lll_prepare_param *prepare_param, void *param);
@@ -56,7 +56,6 @@ static void pdu_b2b_aux_ptr_update(struct pdu_adv *pdu, uint8_t phy, uint8_t fla
 				   uint8_t chan_idx, uint32_t offset_us, uint32_t cte_len_us);
 static void switch_radio_complete_and_b2b_tx(const struct lll_adv_sync *lll, uint8_t phy_s);
 #endif /* CONFIG_BT_CTLR_ADV_SYNC_PDU_BACK2BACK */
-
 int lll_adv_sync_init(void)
 {
 	int err;
@@ -128,7 +127,7 @@ static int prepare_cb(struct lll_prepare_param *p)
 	DEBUG_RADIO_START_A(1);
 
 	lll = p->param;
-
+	COUNT_DK=COUNT_DK+1;
 	/* Calculate the current event latency */
 	lll->latency_event = lll->latency_prepare + p->lazy;
 
@@ -171,10 +170,7 @@ static int prepare_cb(struct lll_prepare_param *p)
 	radio_aa_set(lll->access_addr);
 	radio_crc_configure(PDU_CRC_POLYNOMIAL,
 				sys_get_le24(lll->crc_init));
-//	printk("DATA CHAN:%d  \n", data_chan_use);
 	lll_chan_set(data_chan_use);
-//	lll_chan_set(4);
-
 	upd = 0U;
 	pdu = lll_adv_sync_data_latest_get(lll, NULL, &upd);
 	LL_ASSERT(pdu);
@@ -194,7 +190,6 @@ static int prepare_cb(struct lll_prepare_param *p)
 	}
 #endif
 	radio_pkt_tx_set(pdu);
-
 #if defined(CONFIG_BT_CTLR_ADV_SYNC_PDU_BACK2BACK)
 	if (pdu->adv_ext_ind.ext_hdr_len && pdu->adv_ext_ind.ext_hdr.aux_ptr) {
 		lll->last_pdu = pdu;

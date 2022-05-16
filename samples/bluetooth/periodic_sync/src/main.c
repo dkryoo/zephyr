@@ -6,8 +6,8 @@
 
 #include <device.h>
 #include <devicetree.h>
-#include <drivers/gpio.h>
 #include <bluetooth/bluetooth.h>
+#include <kernel.h> //DK: timer!
 
 #define TIMEOUT_SYNC_CREATE K_SECONDS(10)
 #define NAME_LEN            30
@@ -19,7 +19,25 @@ static uint8_t      per_sid;
 static K_SEM_DEFINE(sem_per_adv, 0, 1);
 static K_SEM_DEFINE(sem_per_sync, 0, 1);
 static K_SEM_DEFINE(sem_per_sync_lost, 0, 1);
-	int count=0;
+//DK timer start
+int count=0;
+uint16_t T_packet;
+uint16_t packet_num=6000;
+
+void my_work_handler(struct k_work *work)
+{
+  printk("1 minute count(TIMEOUT): %d, LAST PACKET NUMBER: %u\n", count, T_packet);
+  count=0;
+}
+K_WORK_DEFINE(my_work, my_work_handler);
+
+void my_timer_handler(struct k_timer *dummy)
+{
+    k_work_submit(&my_work);
+}
+
+K_TIMER_DEFINE(my_timer, my_timer_handler, NULL);
+//DK TIMER END
 /* The devicetree node identifier for the "led0" alias. */
 
 static bool data_cb(struct bt_data *data, void *user_data)
@@ -123,16 +141,20 @@ static void recv_cb(struct bt_le_per_adv_sync *sync,
 		    struct net_buf_simple *buf)
 {
 	char le_addr[BT_ADDR_LE_STR_LEN];
-	char data_str[129];
-
+//	char data_str[256];
 	bt_addr_le_to_str(info->addr, le_addr, sizeof(le_addr));
-	bin2hex(buf->data, buf->len, data_str, sizeof(data_str));
-
+//	bin2hex(buf->data, buf->len, data_str, sizeof(data_str));
+/*
 	printk("PER_ADV_SYNC[%u]: [DEVICE]: %s, tx_power %i, "
 	       "RSSI %i, CTE %u, data length %u, data: %s\n",
 	       bt_le_per_adv_sync_get_index(sync), le_addr, info->tx_power,
 	       info->rssi, info->cte_type, buf->len, data_str);
+		   */
+	T_packet=256U*buf->data[3]+buf->data[2];
 	count=count+1;
+	if(T_packet>packet_num-1){
+		printk("PACKET OVER %u, Count: %d, TOTAL PACKET: %u", packet_num,count,T_packet);
+	}
 }
 
 static struct bt_le_per_adv_sync_cb sync_callbacks = {
@@ -172,6 +194,7 @@ void main(void)
 		return;
 	}
 	printk("success.\n");
+	k_timer_start(&my_timer, K_SECONDS(60), K_SECONDS(60));//DK Timer start
 
 
 
@@ -213,20 +236,12 @@ void main(void)
 			continue;
 		}
 		printk("Periodic sync established.\n");
-		/*
-		printk("Periodic sync receive enable...\n");
-		err = bt_le_per_adv_sync_recv_enable(sync);
-		if (err) {
-			printk("failed (err %d)\n", err);
-			return;
-		}
-		*/
+
 		err = k_sem_take(&sem_per_sync_lost, K_FOREVER);
 		if (err) {
 			printk("failed (err %d)\n", err);
 			return;
 		}
 		printk("Periodic sync lost.\n");
-		printk("COUNT: %d", count);
 	} while (true);
 }
