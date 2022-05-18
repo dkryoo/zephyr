@@ -41,12 +41,12 @@
 #include "ull_adv_internal.h"
 
 #include "ll.h"
+#include <random/rand32.h>
 
 #define BT_DBG_ENABLED IS_ENABLED(CONFIG_BT_DEBUG_HCI_DRIVER)
 #define LOG_MODULE_NAME bt_ctlr_ull_adv_sync
 #include "common/log.h"
 #include "hal/debug.h"
-
 static int init_reset(void);
 static inline struct ll_adv_sync_set *sync_acquire(void);
 static inline void sync_release(struct ll_adv_sync_set *sync);
@@ -69,6 +69,40 @@ static void adv_sync_pdu_chain_check_and_duplicate(struct pdu_adv *new_pdu,
 
 static struct ll_adv_sync_set ll_adv_sync_pool[CONFIG_BT_CTLR_ADV_SYNC_SET];
 static void *adv_sync_free;
+
+//DK PATTERN START
+#define num_rep 2
+#define num_evt 3
+struct info_dk{
+        uint16_t offs;
+        uint8_t chan_idx;
+};
+struct info_dk pattern_rep[num_rep][num_evt];
+
+struct info_dk pattern_gen(){//num means number of channelmap 
+    struct info_dk info_dk_tmp;
+    info_dk_tmp.offs=sys_rand32_get()&0x000003FF;//EVENT_SYNC_B2B_MAFS_US + offs (us)
+    info_dk_tmp.chan_idx=sys_rand32_get()%37; // aux_ptr + chan_idx
+    return info_dk_tmp;
+}
+
+void pattern_init(uint8_t rep, uint8_t evt){
+    for(int i=0; i<rep; i++){
+        for(int j=0; j<evt; j++){
+            pattern_rep[i][j]=pattern_gen();
+        }
+    }
+}
+
+void pattern_reset(uint8_t rep, uint8_t evt){
+    for(int i=0; i<rep; i++){
+        for(int j=0; j<evt; j++){
+            pattern_rep[i][j].offs=0U;
+            pattern_rep[i][j].chan_idx=0U;          
+        }
+    }
+}
+//DK PATTERN END
 
 void ull_adv_sync_pdu_init(struct pdu_adv *pdu, uint8_t ext_hdr_flags)
 {
