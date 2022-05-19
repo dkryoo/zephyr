@@ -150,6 +150,7 @@ static void recv_cb(struct bt_le_per_adv_sync *sync,
 	       bt_le_per_adv_sync_get_index(sync), le_addr, info->tx_power,
 	       info->rssi, info->cte_type, buf->len, data_str);
 		   */
+	printk("DATA[0]: %u , DATA[1]: %u \n", buf->data[2], buf->data[3]);
 	T_packet=256U*buf->data[3]+buf->data[2];
 	count=count+1;
 	if(T_packet>packet_num-1){

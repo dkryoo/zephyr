@@ -6,6 +6,10 @@
 #include <bluetooth/bluetooth.h>
 uint8_t mfg_data[200]; //= { 0xff, 0xff, 0x00 };
 extern uint16_t COUNT_DK;
+#define TRUE 1
+#define FALSE 0
+bool jam_f=TRUE;
+uint8_t count_test=0;
 /*
 static const struct bt_data ad[] = {
 	BT_DATA(BT_DATA_MANUFACTURER_DATA, mfg_data, 3),
@@ -77,7 +81,7 @@ void main(void)
 		}
 	while (true) {
 
-			k_sleep(K_MSEC(8));
+			k_sleep(K_MSEC(1000));
 
 			mfg_data[0]=(uint8_t)(COUNT_DK & 0x00FF);
 			mfg_data[1]=(uint8_t)((COUNT_DK & 0xFF00) >>8);
@@ -95,7 +99,8 @@ void main(void)
 				printk("Failed (err %d)\n", err);
 				return;
 			}
-			printk("done.\n");
+			printk("DATA[0]: %u , DATA[1]: %u \n", mfg_data[0], mfg_data[1]);
+//			printk("done.\n");
 		}
 	bt_le_per_adv_stop(adv);
 }

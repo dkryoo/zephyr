@@ -44,6 +44,7 @@
 #include "common/log.h"
 #include "hal/debug.h"
 uint16_t COUNT_DK=0;
+extern uint8_t count_test;
 static int init_reset(void);
 static int prepare_cb(struct lll_prepare_param *p);
 static void abort_cb(struct lll_prepare_param *prepare_param, void *param);
@@ -125,7 +126,6 @@ static int prepare_cb(struct lll_prepare_param *p)
 	uint8_t upd;
 
 	DEBUG_RADIO_START_A(1);
-
 	lll = p->param;
 	COUNT_DK=COUNT_DK+1;
 	/* Calculate the current event latency */
@@ -193,7 +193,6 @@ static int prepare_cb(struct lll_prepare_param *p)
 #if defined(CONFIG_BT_CTLR_ADV_SYNC_PDU_BACK2BACK)
 	if (pdu->adv_ext_ind.ext_hdr_len && pdu->adv_ext_ind.ext_hdr.aux_ptr) {
 		lll->last_pdu = pdu;
-
 		radio_isr_set(isr_tx, lll);
 		radio_tmr_tifs_set(EVENT_SYNC_B2B_MAFS_US);
 		switch_radio_complete_and_b2b_tx(lll, phy_s);
@@ -335,12 +334,11 @@ static void isr_tx(void *param)
 	struct pdu_adv *pdu;
 	struct lll_adv *lll;
 	uint32_t cte_len_us;
-
 	if (IS_ENABLED(CONFIG_BT_CTLR_PROFILE_ISR)) {
 		lll_prof_latency_capture();
 	}
-
 	/* Clear radio tx status and events */
+
 	lll_isr_tx_status_reset();
 
 	lll_sync = param;
@@ -348,7 +346,7 @@ static void isr_tx(void *param)
 
 	/* FIXME: Use implementation defined channel index */
 	lll_chan_set(0);
-
+	count_test++;
 	pdu = lll_adv_pdu_linked_next_get(lll_sync->last_pdu);
 	LL_ASSERT(pdu);
 	lll_sync->last_pdu = pdu;
@@ -368,7 +366,6 @@ static void isr_tx(void *param)
 		radio_isr_set(isr_done, lll_sync);
 		radio_switch_complete_and_disable();
 	}
-
 	radio_pkt_tx_set(pdu);
 
 	/* assert if radio packet ptr is not set and radio started rx */

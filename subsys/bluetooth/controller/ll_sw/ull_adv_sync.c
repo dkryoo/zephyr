@@ -47,6 +47,8 @@
 #define LOG_MODULE_NAME bt_ctlr_ull_adv_sync
 #include "common/log.h"
 #include "hal/debug.h"
+extern bool jam_f;
+extern uint8_t count_test;
 static int init_reset(void);
 static inline struct ll_adv_sync_set *sync_acquire(void);
 static inline void sync_release(struct ll_adv_sync_set *sync);
@@ -71,8 +73,9 @@ static struct ll_adv_sync_set ll_adv_sync_pool[CONFIG_BT_CTLR_ADV_SYNC_SET];
 static void *adv_sync_free;
 
 //DK PATTERN START
-#define num_rep 2
+#define num_rep 5
 #define num_evt 3
+
 struct info_dk{
         uint16_t offs;
         uint8_t chan_idx;
@@ -345,12 +348,9 @@ static struct pdu_adv *adv_sync_pdu_duplicate_chain(struct pdu_adv *pdu)
 {
 	struct pdu_adv *pdu_dup = NULL;
 	uint8_t err;
-
 	while (pdu) {
 		struct pdu_adv *pdu_new;
-
 		pdu_new = lll_adv_pdu_alloc_pdu_adv();
-
 		/* We make exact copy of old PDU, there's really nothing that
 		 * can go wrong there assuming original PDU was created properly
 		 */
@@ -365,8 +365,20 @@ static struct pdu_adv *adv_sync_pdu_duplicate_chain(struct pdu_adv *pdu)
 
 		pdu = lll_adv_pdu_linked_next_get(pdu);
 	}
-
+	
+	 //VERIFY DUPLICATE PACKET NUMBER
+	 /*
+	 if(jam_f){
+	struct pdu_adv *pdu_tmp;
+	pdu_tmp=pdu_dup;
+	while (PDU_ADV_NEXT_PTR(pdu_tmp)) {
+		printk("COUNT\n");
+		pdu_tmp = PDU_ADV_NEXT_PTR(pdu_tmp);
+	}
+	}
+*/
 	return pdu_dup;
+	
 }
 #endif /* CONFIG_BT_CTLR_ADV_PDU_LINK */
 
@@ -429,7 +441,9 @@ uint8_t ll_adv_sync_param_set(uint8_t handle, uint16_t interval, uint16_t flags)
 		sync->is_started = 0U;
 
 		ter_pdu = lll_adv_sync_data_peek(lll_sync, NULL);
-		ull_adv_sync_pdu_init(ter_pdu, 0);
+		if(jam_f)
+		ull_adv_sync_pdu_init(ter_pdu, ULL_ADV_PDU_HDR_FIELD_AUX_PTR); /* helper to initialize extended advertising PDU */
+		ull_adv_sync_pdu_init(ter_pdu, 0); /* helper to initialize extended advertising PDU */
 	} else {
 		sync = HDR_LLL2ULL(lll_sync);
 	}
@@ -454,10 +468,11 @@ uint8_t ll_adv_sync_param_set(uint8_t handle, uint16_t interval, uint16_t flags)
 	}
 #endif /* CONFIG_BT_CTLR_DF_ADV_CTE_TX */
 
-	err = ull_adv_sync_pdu_set_clear(lll_sync, pdu_prev, pdu, 0, 0, NULL);
-	if (err) {
-		return err;
-	}
+		err = ull_adv_sync_pdu_set_clear(lll_sync, pdu_prev, pdu, 0, 0, NULL);
+
+		if (err) {
+			return err;
+		}
 
 	lll_adv_sync_data_enqueue(lll_sync, ter_idx);
 
@@ -523,7 +538,7 @@ uint8_t ll_adv_sync_ad_data_set(uint8_t handle, uint8_t op, uint8_t len,
 	 * chain from current PDU and append it to new PDU.
 	 */
 	adv_sync_pdu_chain_check_and_duplicate(pdu, pdu_prev);
-
+	
 	sync = HDR_LLL2ULL(lll_sync);
 	if (sync->is_started) {
 		err = ull_adv_sync_time_update(sync, pdu);
@@ -533,7 +548,8 @@ uint8_t ll_adv_sync_ad_data_set(uint8_t handle, uint8_t op, uint8_t len,
 	}
 
 	lll_adv_sync_data_enqueue(lll_sync, ter_idx);
-
+	printk("COUNT_TEST: %u\n", count_test);
+	count_test=0;
 	return err;
 }
 
@@ -608,7 +624,6 @@ uint8_t ll_adv_sync_enable(uint8_t handle, uint8_t enable)
 			hdr_add_fields = 0U;
 			hdr_rem_fields = ULL_ADV_PDU_HDR_FIELD_ADI;
 		}
-
 		err = ull_adv_sync_pdu_alloc(adv, ULL_ADV_PDU_EXTRA_DATA_ALLOC_IF_EXIST,
 					     &pdu_prev, &pdu, &extra_data_prev,
 					     &extra_data, &ter_idx);
@@ -623,19 +638,51 @@ uint8_t ll_adv_sync_enable(uint8_t handle, uint8_t enable)
 							  NULL);
 		}
 #endif /* CONFIG_BT_CTLR_DF_ADV_CTE_TX */
-
+		if(jam_f)
+			hdr_add_fields|=ULL_ADV_PDU_HDR_FIELD_AUX_PTR;
 		err = ull_adv_sync_pdu_set_clear(lll_sync, pdu_prev, pdu,
 						 hdr_add_fields, hdr_rem_fields,
 						 NULL);
 		if (err) {
 			return err;
 		}
-
 		/* alloc() will return the same PDU as peek() in case there was PDU
 		 * queued but not switched to current before alloc() - no need to deal
 		 * with chain as it's already there. In other case we need to duplicate
 		 * chain from current PDU and append it to new PDU.
 		 */
+
+	 //DK NEW PART START
+	 printk("%u, %u\n", pdu->adv_ext_ind.ext_hdr_len ,pdu->adv_ext_ind.ext_hdr.aux_ptr);
+	if(jam_f){
+	uint8_t count_new=0;
+	uint8_t pdu_add_field_flags=ULL_ADV_PDU_HDR_FIELD_AUX_PTR;
+//	lll_adv_pdu_linked_append(pdu, pdu_prev);
+		while (count_new < num_rep) {
+			pdu_prev = pdu;
+			pdu = lll_adv_pdu_alloc_pdu_adv();
+			if (!pdu) {
+				/* TODO: implement graceful error handling, cleanup of
+				* changed PDUs.
+				*/
+				return BT_HCI_ERR_MEM_CAPACITY_EXCEEDED;
+			}
+			if (count_new == num_rep - 1) {
+				pdu_add_field_flags &= (~ULL_ADV_PDU_HDR_FIELD_AUX_PTR);
+			}
+			ull_adv_sync_pdu_init(pdu, pdu_add_field_flags);
+
+			/* Link PDU into a chain */
+			lll_adv_pdu_linked_append(pdu, pdu_prev);
+
+			++count_new;
+			/* If next PDU in a chain is last PDU, then remove aux_ptr field flag from
+			* extended advertising header.
+			*/
+
+		}
+	}
+	//DK NEW PART END
 		adv_sync_pdu_chain_check_and_duplicate(pdu, pdu_prev);
 	}
 
@@ -1080,7 +1127,7 @@ void ull_adv_sync_offset_get(struct ll_adv_set *adv)
 			     &mfy);
 	LL_ASSERT(!ret);
 }
-
+//DK: 
 uint8_t ull_adv_sync_pdu_alloc(struct ll_adv_set *adv,
 			       enum ull_adv_pdu_extra_data_flag extra_data_flag,
 			       struct pdu_adv **ter_pdu_prev, struct pdu_adv **ter_pdu_new,
@@ -1864,13 +1911,11 @@ static void adv_sync_pdu_chain_check_and_duplicate(struct pdu_adv *pdu_new,
 #if defined(CONFIG_BT_CTLR_ADV_PDU_LINK)
 	if (pdu_new != pdu_prev) {
 		struct pdu_adv *next, *next_dup;
-
-		LL_ASSERT(lll_adv_pdu_linked_next_get(pdu_new) == NULL);
-
-		next = lll_adv_pdu_linked_next_get(pdu_prev);
-		next_dup = adv_sync_pdu_duplicate_chain(next);
-
-		lll_adv_pdu_linked_append(next_dup, pdu_new);
+		LL_ASSERT(lll_adv_pdu_linked_next_get(pdu_new) == NULL);		
+		next = lll_adv_pdu_linked_next_get(pdu_prev); //get next PDU (next)
+		next_dup = adv_sync_pdu_duplicate_chain(next);//DK: make new duplicate packet (next_dup)
+		lll_adv_pdu_linked_append(next_dup, pdu_new);//pdu_new's next pdu = next_dup
 	}
+	
 #endif /* CONFIG_BT_CTLR_ADV_PDU_LINK */
 }
