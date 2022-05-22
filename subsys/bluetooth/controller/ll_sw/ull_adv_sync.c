@@ -653,7 +653,6 @@ uint8_t ll_adv_sync_enable(uint8_t handle, uint8_t enable)
 		 */
 
 	 //DK NEW PART START
-	 printk("%u, %u\n", pdu->adv_ext_ind.ext_hdr_len ,pdu->adv_ext_ind.ext_hdr.aux_ptr);
 	if(jam_f){
 	uint8_t count_new=0;
 	uint8_t pdu_add_field_flags=ULL_ADV_PDU_HDR_FIELD_AUX_PTR;
