@@ -40,6 +40,7 @@ void main(void)
 	else
 	mfg_data[i]=400-i;
 	}
+	mfg_data[1]=0;
 	struct bt_data ad[] = {
     BT_DATA(BT_DATA_MANUFACTURER_DATA, mfg_data, sizeof(mfg_data)),
 	};
@@ -66,7 +67,13 @@ void main(void)
 		       " (err %d)\n", err);
 		return;
 	}
-
+	/*
+	err = bt_le_per_adv_set_data(adv, ad, ARRAY_SIZE(ad));
+		if (err) {
+			printk("Failed (err %d)\n", err);
+			return;
+		}
+		*/
 	/* Enable Periodic Advertising */
 	err = bt_le_per_adv_start(adv);
 	if (err) {
@@ -79,6 +86,7 @@ void main(void)
 			       "(err %d)\n", err);
 			return;
 		}
+
 	while (true) {
 
 			k_sleep(K_MSEC(1000));

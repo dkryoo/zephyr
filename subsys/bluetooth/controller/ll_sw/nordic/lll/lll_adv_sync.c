@@ -57,6 +57,7 @@ static void pdu_b2b_aux_ptr_update(struct pdu_adv *pdu, uint8_t phy, uint8_t fla
 				   uint8_t chan_idx, uint32_t offset_us, uint32_t cte_len_us);
 static void switch_radio_complete_and_b2b_tx(const struct lll_adv_sync *lll, uint8_t phy_s);
 #endif /* CONFIG_BT_CTLR_ADV_SYNC_PDU_BACK2BACK */
+extern bool jam_f;
 int lll_adv_sync_init(void)
 {
 	int err;
@@ -152,7 +153,6 @@ static int prepare_cb(struct lll_prepare_param *p)
 	data_chan_count = lll->chm[lll->chm_first].data_chan_count;
 	data_chan_use = lll_chan_sel_2(event_counter, lll->data_chan_id,
 				       data_chan_map, data_chan_count);
-
 	/* Start setting up of Radio h/w */
 	radio_reset();
 #if defined(CONFIG_BT_CTLR_TX_PWR_DYNAMIC_CONTROL)
@@ -346,7 +346,6 @@ static void isr_tx(void *param)
 
 	/* FIXME: Use implementation defined channel index */
 	lll_chan_set(0);
-	count_test++;
 	pdu = lll_adv_pdu_linked_next_get(lll_sync->last_pdu);
 	LL_ASSERT(pdu);
 	lll_sync->last_pdu = pdu;
@@ -411,6 +410,7 @@ static void pdu_b2b_update(struct lll_adv_sync *lll, struct pdu_adv *pdu, uint32
 		pdu_b2b_aux_ptr_update(pdu, lll->adv->phy_s, lll->adv->phy_flags, 0,
 				       EVENT_SYNC_B2B_MAFS_US, cte_len_us);
 		pdu = lll_adv_pdu_linked_next_get(pdu);
+
 	}
 }
 

@@ -23,11 +23,16 @@ static K_SEM_DEFINE(sem_per_sync_lost, 0, 1);
 int count=0;
 uint16_t T_packet;
 uint16_t packet_num=6000;
-
+uint16_t count_test=0;
+#define TRUE 1
+#define FALSE 0
+bool jam_f=TRUE;
 void my_work_handler(struct k_work *work)
 {
-  printk("1 minute count(TIMEOUT): %d, LAST PACKET NUMBER: %u\n", count, T_packet);
-  count=0;
+//  printk("1 minute count(TIMEOUT): %d, LAST PACKET NUMBER: %u\n", count, T_packet);
+//  count=0;
+	printk("COUNT TEST for 10 seconds: %u\n", count_test);
+	count_test=0;
 }
 K_WORK_DEFINE(my_work, my_work_handler);
 
@@ -132,7 +137,7 @@ static void term_cb(struct bt_le_per_adv_sync *sync,
 
 	printk("DK PER_ADV_SYNC[%u]: [DEVICE]: %s sync terminated\n",
 	       bt_le_per_adv_sync_get_index(sync), le_addr);
-
+	printk("THE REASON: %u\n", info->reason);
 	k_sem_give(&sem_per_sync_lost);
 }
 
@@ -143,7 +148,6 @@ static void recv_cb(struct bt_le_per_adv_sync *sync,
 	char le_addr[BT_ADDR_LE_STR_LEN];
 //	char data_str[256];
 	bt_addr_le_to_str(info->addr, le_addr, sizeof(le_addr));
-//	bin2hex(buf->data, buf->len, data_str, sizeof(data_str));
 /*
 	printk("PER_ADV_SYNC[%u]: [DEVICE]: %s, tx_power %i, "
 	       "RSSI %i, CTE %u, data length %u, data: %s\n",
@@ -195,11 +199,9 @@ void main(void)
 		return;
 	}
 	printk("success.\n");
-	k_timer_start(&my_timer, K_SECONDS(60), K_SECONDS(60));//DK Timer start
-
-
-
+	k_timer_start(&my_timer, K_SECONDS(10), K_SECONDS(10));//DK Timer start
 	printk("receive enabled.\n");
+
 	do {
 		printk("Waiting for periodic advertising...\n");
 		per_adv_found = false;
@@ -208,8 +210,6 @@ void main(void)
 			printk("failed (err %d)\n", err);
 			return;
 		}
-		printk("Found periodic advertising.\n");
-
 		printk("Creating Periodic Advertising Sync...");
 		bt_addr_le_copy(&sync_create_param.addr, &per_addr);
 		sync_create_param.options = BT_LE_PER_ADV_SYNC_OPT_FILTER_DUPLICATE;
@@ -221,8 +221,6 @@ void main(void)
 			printk("failed (err %d)\n", err);
 			return;
 		}
-		printk("success.\n");
-
 		printk("Waiting for periodic sync...\n");
 		err = k_sem_take(&sem_per_sync, TIMEOUT_SYNC_CREATE);
 		if (err) {
@@ -236,8 +234,8 @@ void main(void)
 			}
 			continue;
 		}
-		printk("Periodic sync established.\n");
 
+		printk("Periodic sync established.\n");
 		err = k_sem_take(&sem_per_sync_lost, K_FOREVER);
 		if (err) {
 			printk("failed (err %d)\n", err);

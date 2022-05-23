@@ -66,7 +66,7 @@ static bool is_max_cte_reached(uint8_t max_cte_count, uint8_t cte_count);
 #endif /* CONFIG_BT_CTLR_DF_SCAN_CTE_RX */
 static uint8_t data_channel_calc(struct lll_sync *lll);
 static enum sync_status sync_filtrate_by_cte_type(uint8_t cte_type_mask, uint8_t filter_policy);
-
+extern uint16_t count_test;
 static uint8_t trx_cnt;
 
 int lll_sync_init(void)
@@ -163,7 +163,6 @@ void lll_sync_aux_prepare_cb(struct lll_sync *lll,
 				sys_get_le24(lll->crc_init));
 
 	lll_chan_set(lll_aux->chan);
-//	lll_chan_set(4);
 	
 	radio_isr_set(isr_rx_aux_chain, lll);
 
@@ -890,7 +889,6 @@ static void isr_rx_aux_chain(void *param)
 	uint8_t trx_done;
 	uint8_t crc_ok;
 	int err;
-
 	lll = param;
 	lll_aux = lll->lll_aux;
 	if (!lll_aux) {
@@ -949,7 +947,6 @@ static void isr_rx_aux_chain(void *param)
 isr_rx_aux_chain_done:
 	if (!crc_ok || err) {
 		struct node_rx_pdu *node_rx;
-
 		/* Generate message to release aux context and flag the report
 		 * generated thereafter by HCI as incomplete.
 		 */

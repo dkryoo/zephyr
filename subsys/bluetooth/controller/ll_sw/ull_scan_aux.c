@@ -59,7 +59,7 @@ static void ticker_cb(uint32_t ticks_at_expire, uint32_t ticks_drift,
 		      uint32_t remainder, uint16_t lazy, uint8_t force,
 		      void *param);
 static void ticker_op_cb(uint32_t status, void *param);
-
+extern uint16_t count_test;
 /* Auxiliary context pool used for reception of PDUs at aux offsets, common for
  * both Extended Advertising and Periodic Advertising.
  * Increasing the count allows simultaneous reception of interleaved chain PDUs
@@ -553,7 +553,6 @@ void ull_scan_aux_setup(memq_link_t *link, struct node_rx_hdr *rx)
 	 */
 	lll_aux->chan = aux_ptr->chan_idx;
 	lll_aux->phy = BIT(aux_ptr->phy);
-
 	/* See if this was already scheduled from LLL. If so, store aux context
 	 * in global scan struct so we can pick it when scanned node is received
 	 * with a valid context.
