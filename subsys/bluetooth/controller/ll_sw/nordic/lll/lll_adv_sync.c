@@ -58,6 +58,7 @@ static void pdu_b2b_aux_ptr_update(struct pdu_adv *pdu, uint8_t phy, uint8_t fla
 static void switch_radio_complete_and_b2b_tx(const struct lll_adv_sync *lll, uint8_t phy_s);
 #endif /* CONFIG_BT_CTLR_ADV_SYNC_PDU_BACK2BACK */
 extern bool jam_f;
+uint8_t count_p=0;
 int lll_adv_sync_init(void)
 {
 	int err;
@@ -357,6 +358,20 @@ static void isr_tx(void *param)
 #endif /* CONFIG_BT_CTLR_DF_ADV_CTE_TX */
 
 	/* setup tIFS switching */
+	if(jam_f){
+		if(count_p<num_rep-1){
+			radio_tmr_tifs_set(EVENT_SYNC_B2B_MAFS_US);
+			radio_isr_set(isr_tx, lll_sync);
+			switch_radio_complete_and_b2b_tx(lll_sync, lll->phy_s);
+			count_p++;
+		}
+		else{
+			radio_isr_set(isr_done, lll_sync);
+			radio_switch_complete_and_disable();
+			count_p=0;
+		}
+	}
+	else{
 	if (pdu->adv_ext_ind.ext_hdr_len && pdu->adv_ext_ind.ext_hdr.aux_ptr) {
 		radio_tmr_tifs_set(EVENT_SYNC_B2B_MAFS_US);
 		radio_isr_set(isr_tx, lll_sync);
@@ -364,6 +379,7 @@ static void isr_tx(void *param)
 	} else {
 		radio_isr_set(isr_done, lll_sync);
 		radio_switch_complete_and_disable();
+	}
 	}
 	radio_pkt_tx_set(pdu);
 

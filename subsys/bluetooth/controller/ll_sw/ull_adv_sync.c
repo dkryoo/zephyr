@@ -73,8 +73,6 @@ static struct ll_adv_sync_set ll_adv_sync_pool[CONFIG_BT_CTLR_ADV_SYNC_SET];
 static void *adv_sync_free;
 //uint8_t hdr_data_DK[ULL_ADV_HDR_DATA_LEN_SIZE + ULL_ADV_HDR_DATA_DATA_PTR_SIZE];
 //DK PATTERN START
-#define num_rep 3
-#define num_evt 3
 
 struct info_dk{
         uint16_t offs;
@@ -106,7 +104,14 @@ void pattern_reset(uint8_t rep, uint8_t evt){
     }
 }
 //DK PATTERN END
-
+//DK SEQUENCE EVENT START
+/*
+struct info_dk pattern_sequence(int event_num){
+	printk("TO DO");
+	return 0;
+}
+*/
+//DK SEQUENCE EVENT END
 void ull_adv_sync_pdu_init(struct pdu_adv *pdu, uint8_t ext_hdr_flags)
 {
 	struct pdu_adv_com_ext_adv *com_hdr;

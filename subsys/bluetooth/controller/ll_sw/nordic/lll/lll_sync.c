@@ -66,7 +66,6 @@ static bool is_max_cte_reached(uint8_t max_cte_count, uint8_t cte_count);
 #endif /* CONFIG_BT_CTLR_DF_SCAN_CTE_RX */
 static uint8_t data_channel_calc(struct lll_sync *lll);
 static enum sync_status sync_filtrate_by_cte_type(uint8_t cte_type_mask, uint8_t filter_policy);
-extern uint16_t count_test;
 static uint8_t trx_cnt;
 
 int lll_sync_init(void)

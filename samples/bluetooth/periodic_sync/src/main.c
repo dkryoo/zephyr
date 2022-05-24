@@ -29,10 +29,10 @@ uint16_t count_test=0;
 bool jam_f=TRUE;
 void my_work_handler(struct k_work *work)
 {
-//  printk("1 minute count(TIMEOUT): %d, LAST PACKET NUMBER: %u\n", count, T_packet);
-//  count=0;
-	printk("COUNT TEST for 10 seconds: %u\n", count_test);
-	count_test=0;
+  printk("1 minute count(TIMEOUT): %d, LAST PACKET NUMBER: %u\n", count, T_packet);
+  count=0;
+//	printk("COUNT TEST for 10 seconds: %u\n", count_test);
+//	count_test=0;
 }
 K_WORK_DEFINE(my_work, my_work_handler);
 
@@ -154,7 +154,7 @@ static void recv_cb(struct bt_le_per_adv_sync *sync,
 	       bt_le_per_adv_sync_get_index(sync), le_addr, info->tx_power,
 	       info->rssi, info->cte_type, buf->len, data_str);
 		   */
-	printk("DATA[0]: %u , DATA[1]: %u \n", buf->data[2], buf->data[3]);
+	printk("DATA[0]: %u , DATA[1]: %u, length: %u\n", buf->data[2], buf->data[3],buf->len);
 	T_packet=256U*buf->data[3]+buf->data[2];
 	count=count+1;
 	if(T_packet>packet_num-1){
@@ -199,7 +199,7 @@ void main(void)
 		return;
 	}
 	printk("success.\n");
-	k_timer_start(&my_timer, K_SECONDS(10), K_SECONDS(10));//DK Timer start
+	k_timer_start(&my_timer, K_SECONDS(60), K_SECONDS(60));//DK Timer start
 	printk("receive enabled.\n");
 
 	do {
