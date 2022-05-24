@@ -9,8 +9,39 @@ extern uint16_t COUNT_DK;
 #define TRUE 1
 #define FALSE 0
 bool jam_f=TRUE;
-bool no_aux_f=TRUE;
 uint8_t count_test=0;
+extern uint8_t count_evt;
+
+//DK PATTERN START
+
+info_dk pattern_rep[num_rep][num_evt];
+
+info_dk pattern_gen(uint8_t rep, uint8_t evt){//num means number of channelmap 
+	info_dk info_dk_tmp;
+//    info_dk_tmp.offs=sys_rand32_get()&0x000003FF;//EVENT_SYNC_B2B_MAFS_US + offs (us)
+		info_dk_tmp.offs=300+100*evt;
+//    info_dk_tmp.chan_idx=sys_rand32_get()%37; // aux_ptr + chan_idx
+		info_dk_tmp.chan_idx=3*rep+evt;
+    return info_dk_tmp;
+}
+
+void pattern_init(uint8_t rep, uint8_t evt){
+    for(int i=0; i<rep; i++){
+        for(int j=0; j<evt; j++){
+            pattern_rep[i][j]=pattern_gen(rep, evt);
+        }
+    }
+}
+
+void pattern_reset(uint8_t rep, uint8_t evt){
+    for(int i=0; i<rep; i++){
+        for(int j=0; j<evt; j++){
+            pattern_rep[i][j].offs=0U;
+            pattern_rep[i][j].chan_idx=0U;          
+        }
+    }
+}
+//DK PATTERN END
 /*
 static const struct bt_data ad[] = {
 	BT_DATA(BT_DATA_MANUFACTURER_DATA, mfg_data, 3),
@@ -46,7 +77,7 @@ void main(void)
     BT_DATA(BT_DATA_MANUFACTURER_DATA, mfg_data, sizeof(mfg_data)),
 	};
 	printk("Starting Periodic Advertising Demo\n");
-
+	pattern_init(num_rep, num_evt);
 	/* Initialize the Bluetooth Subsystem */
 	err = bt_enable(NULL);
 	if (err) {
@@ -109,7 +140,7 @@ void main(void)
 				return;
 			}
 			printk("DATA[0]: %u , DATA[1]: %u \n", mfg_data[0], mfg_data[1]);
-//			printk("COUNT_TEST: %u\n", count_test);
+			printk("COUNT_evt: %u\n", count_evt);
 //			count_test=0;
 //			printk("done.\n");
 		}

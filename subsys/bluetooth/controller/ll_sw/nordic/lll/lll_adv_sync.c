@@ -43,8 +43,7 @@
 #define LOG_MODULE_NAME bt_ctlr_lll_adv_sync
 #include "common/log.h"
 #include "hal/debug.h"
-uint16_t COUNT_DK=0;
-extern uint8_t count_test;
+
 static int init_reset(void);
 static int prepare_cb(struct lll_prepare_param *p);
 static void abort_cb(struct lll_prepare_param *prepare_param, void *param);
@@ -58,8 +57,21 @@ static void pdu_b2b_aux_ptr_update(struct pdu_adv *pdu, uint8_t phy, uint8_t fla
 static void switch_radio_complete_and_b2b_tx(const struct lll_adv_sync *lll, uint8_t phy_s);
 #endif /* CONFIG_BT_CTLR_ADV_SYNC_PDU_BACK2BACK */
 extern bool jam_f;
-extern bool no_aux_f;
+uint16_t COUNT_DK=0;
+extern uint8_t count_test;
 uint8_t count_p=0;
+uint8_t count_evt=0;
+extern info_dk pattern_rep[num_rep][num_evt];
+//DK SEQUENCE EVENT START
+/*
+struct info_dk pattern_sequence(int event_num){
+	printk("TO DO");
+	return 0;
+}
+*/
+//DK SEQUENCE EVENT END
+
+
 int lll_adv_sync_init(void)
 {
 	int err;
@@ -196,7 +208,10 @@ static int prepare_cb(struct lll_prepare_param *p)
 	if ((pdu->adv_ext_ind.ext_hdr_len && pdu->adv_ext_ind.ext_hdr.aux_ptr)|| jam_f ){
 		lll->last_pdu = pdu;
 		radio_isr_set(isr_tx, lll);
-		radio_tmr_tifs_set(EVENT_SYNC_B2B_MAFS_US);
+		if(jam_f)
+			radio_tmr_tifs_set(EVENT_SYNC_B2B_MAFS_US+pattern_rep[0][count_evt].offs);
+		else
+			radio_tmr_tifs_set(EVENT_SYNC_B2B_MAFS_US);
 		switch_radio_complete_and_b2b_tx(lll, phy_s);
 	} else
 #endif /* CONFIG_BT_CTLR_ADV_SYNC_PDU_BACK2BACK */
@@ -340,7 +355,6 @@ static void isr_tx(void *param)
 		lll_prof_latency_capture();
 	}
 	/* Clear radio tx status and events */
-//	count_test++;
 
 	lll_isr_tx_status_reset();
 
@@ -348,7 +362,10 @@ static void isr_tx(void *param)
 	lll = lll_sync->adv;
 
 	/* FIXME: Use implementation defined channel index */
-	lll_chan_set(0);
+	if(jam_f)
+		lll_chan_set(pattern_rep[count_p][count_evt].chan_idx);
+	else
+		lll_chan_set(0);
 	pdu = lll_adv_pdu_linked_next_get(lll_sync->last_pdu);
 	LL_ASSERT(pdu);
 	lll_sync->last_pdu = pdu;
@@ -362,7 +379,7 @@ static void isr_tx(void *param)
 	/* setup tIFS switching */
 	if(jam_f){
 		if(count_p<num_rep-1){
-			radio_tmr_tifs_set(EVENT_SYNC_B2B_MAFS_US);
+			radio_tmr_tifs_set(EVENT_SYNC_B2B_MAFS_US+pattern_rep[count_p+1][count_evt].offs);
 			radio_isr_set(isr_tx, lll_sync);
 			switch_radio_complete_and_b2b_tx(lll_sync, lll->phy_s);
 			count_p++;
@@ -371,6 +388,9 @@ static void isr_tx(void *param)
 			radio_isr_set(isr_done, lll_sync);
 			radio_switch_complete_and_disable();
 			count_p=0;
+			count_evt++;
+			if(count_evt==num_evt)
+				count_evt=0;
 		}
 	}
 	else{

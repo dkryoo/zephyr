@@ -3,9 +3,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-//DK DEFINE
-#define num_rep 3
-#define num_evt 3
+
 
 struct lll_adv_iso_stream {
 	/* Associated BIG Handle */
