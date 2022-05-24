@@ -9,6 +9,7 @@ extern uint16_t COUNT_DK;
 #define TRUE 1
 #define FALSE 0
 bool jam_f=TRUE;
+bool no_aux_f=TRUE;
 uint8_t count_test=0;
 /*
 static const struct bt_data ad[] = {
@@ -108,6 +109,8 @@ void main(void)
 				return;
 			}
 			printk("DATA[0]: %u , DATA[1]: %u \n", mfg_data[0], mfg_data[1]);
+//			printk("COUNT_TEST: %u\n", count_test);
+//			count_test=0;
 //			printk("done.\n");
 		}
 	bt_le_per_adv_stop(adv);

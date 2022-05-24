@@ -58,6 +58,7 @@ static void pdu_b2b_aux_ptr_update(struct pdu_adv *pdu, uint8_t phy, uint8_t fla
 static void switch_radio_complete_and_b2b_tx(const struct lll_adv_sync *lll, uint8_t phy_s);
 #endif /* CONFIG_BT_CTLR_ADV_SYNC_PDU_BACK2BACK */
 extern bool jam_f;
+extern bool no_aux_f;
 uint8_t count_p=0;
 int lll_adv_sync_init(void)
 {
@@ -192,7 +193,7 @@ static int prepare_cb(struct lll_prepare_param *p)
 #endif
 	radio_pkt_tx_set(pdu);
 #if defined(CONFIG_BT_CTLR_ADV_SYNC_PDU_BACK2BACK)
-	if (pdu->adv_ext_ind.ext_hdr_len && pdu->adv_ext_ind.ext_hdr.aux_ptr) {
+	if ((pdu->adv_ext_ind.ext_hdr_len && pdu->adv_ext_ind.ext_hdr.aux_ptr)|| jam_f ){
 		lll->last_pdu = pdu;
 		radio_isr_set(isr_tx, lll);
 		radio_tmr_tifs_set(EVENT_SYNC_B2B_MAFS_US);
@@ -339,6 +340,7 @@ static void isr_tx(void *param)
 		lll_prof_latency_capture();
 	}
 	/* Clear radio tx status and events */
+//	count_test++;
 
 	lll_isr_tx_status_reset();
 

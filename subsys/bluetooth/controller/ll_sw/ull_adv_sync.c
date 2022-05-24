@@ -435,11 +435,7 @@ uint8_t ll_adv_sync_param_set(uint8_t handle, uint16_t interval, uint16_t flags)
 		sync->is_started = 0U;
 
 		ter_pdu = lll_adv_sync_data_peek(lll_sync, NULL);
-		if(jam_f){
-			uint16_t hdr_add_fields=0U;
-			hdr_add_fields|=ULL_ADV_PDU_HDR_FIELD_AUX_PTR;
-			ull_adv_sync_pdu_init(ter_pdu, hdr_add_fields); /* helper to initialize extended advertising PDU */
-		}
+
 		ull_adv_sync_pdu_init(ter_pdu, 0); /* helper to initialize extended advertising PDU */
 	} else {
 		sync = HDR_LLL2ULL(lll_sync);
@@ -490,8 +486,6 @@ uint8_t ll_adv_sync_ad_data_set(uint8_t handle, uint8_t op, uint8_t len,
 	uint8_t err;
 	uint16_t hdr_add_fields=ULL_ADV_PDU_HDR_FIELD_AD_DATA;
 	uint16_t hdr_rem_fields=0U;
-	if(num_rep&&jam_f)
-		hdr_add_fields|=ULL_ADV_PDU_HDR_FIELD_AUX_PTR;
 
 	/* TODO: handle other op values */
 	if (op != BT_HCI_LE_EXT_ADV_OP_COMPLETE_DATA &&
@@ -526,7 +520,10 @@ uint8_t ll_adv_sync_ad_data_set(uint8_t handle, uint8_t op, uint8_t len,
 						  0U, 0U, NULL);
 	}
 #endif /* CONFIG_BT_CTLR_DF_ADV_CTE_TX */
-
+	if(jam_f)
+	err = ull_adv_sync_pdu_set_clear(lll_sync, pdu_prev, pdu, hdr_add_fields, ULL_ADV_PDU_HDR_FIELD_AUX_PTR,
+					 hdr_data);
+	else
 	err = ull_adv_sync_pdu_set_clear(lll_sync, pdu_prev, pdu, hdr_add_fields, 0,
 					 hdr_data);
 	if (err) {
@@ -546,10 +543,8 @@ uint8_t ll_adv_sync_ad_data_set(uint8_t handle, uint8_t op, uint8_t len,
 			hdr_add_fields&=(~ULL_ADV_PDU_HDR_FIELD_AUX_PTR);
 		while(count_new<num_rep){
 			pdu_tmp=lll_adv_pdu_alloc_pdu_adv();
-			if(count_new==num_rep-1){
-				hdr_add_fields&=(~ULL_ADV_PDU_HDR_FIELD_AUX_PTR);
-				hdr_rem_fields|=ULL_ADV_PDU_HDR_FIELD_AUX_PTR;
-			}
+			hdr_add_fields&=(~ULL_ADV_PDU_HDR_FIELD_AUX_PTR);
+			hdr_rem_fields|=ULL_ADV_PDU_HDR_FIELD_AUX_PTR;
 			err = ull_adv_sync_pdu_set_clear(lll_sync, pdu, pdu_tmp,hdr_add_fields, hdr_rem_fields, hdr_data);
 			lll_adv_pdu_linked_append_end(pdu_tmp, pdu);
 			count_new++;
@@ -558,15 +553,6 @@ uint8_t ll_adv_sync_ad_data_set(uint8_t handle, uint8_t op, uint8_t len,
 	else{
 		adv_sync_pdu_chain_check_and_duplicate(pdu, pdu_prev);	
 	}
-	/*
-	struct pdu_adv *pdu_test;
-	pdu_test=pdu;
-	while(pdu_test){
-		if(pdu_test_prev->adv_ext_ind.ext_hdr.data)//DKING
-		printk("ADV SET WELL\n");
-		pdu_test=lll_adv_pdu_linked_next_get(pdu_test);
-	}
-*/
 
 	sync = HDR_LLL2ULL(lll_sync);
 	if (sync->is_started) {
@@ -690,7 +676,7 @@ uint8_t ll_adv_sync_enable(uint8_t handle, uint8_t enable)
 			if (!pdu_tmp) {
 				return BT_HCI_ERR_MEM_CAPACITY_EXCEEDED;
 			}
-			if (count_new == num_rep - 1)
+//			if (count_new == num_rep - 1)//DK ING
 				hdr_add_fields &= (~ULL_ADV_PDU_HDR_FIELD_AUX_PTR);
 			
 			ull_adv_sync_pdu_init(pdu_tmp, hdr_add_fields);
