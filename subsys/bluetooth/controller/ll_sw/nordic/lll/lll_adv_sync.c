@@ -62,6 +62,8 @@ extern uint8_t count_test;
 uint8_t count_p=0;
 uint8_t count_evt=0;
 extern info_dk pattern_rep[num_rep][num_evt];
+extern uint32_t pdu_time;//DK
+
 //DK SEQUENCE EVENT START
 /*
 struct info_dk pattern_sequence(int event_num){
@@ -203,6 +205,8 @@ static int prepare_cb(struct lll_prepare_param *p)
 		pdu_b2b_update(lll, pdu, cte_len_us);
 	}
 #endif
+	if(jam_f)
+		pdu_time=PDU_AC_US(pdu->len, lll->adv->phy_s, lll->adv->phy_flags);
 	radio_pkt_tx_set(pdu);
 #if defined(CONFIG_BT_CTLR_ADV_SYNC_PDU_BACK2BACK)
 	if ((pdu->adv_ext_ind.ext_hdr_len && pdu->adv_ext_ind.ext_hdr.aux_ptr)|| jam_f ){

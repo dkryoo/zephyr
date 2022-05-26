@@ -11,7 +11,7 @@ extern uint16_t COUNT_DK;
 bool jam_f=TRUE;
 uint8_t count_test=0;
 extern uint8_t count_evt;
-
+uint32_t pdu_time=0;
 //DK PATTERN START
 
 info_dk pattern_rep[num_rep][num_evt];
@@ -19,9 +19,9 @@ info_dk pattern_rep[num_rep][num_evt];
 info_dk pattern_gen(uint8_t rep, uint8_t evt){//num means number of channelmap 
 	info_dk info_dk_tmp;
 //    info_dk_tmp.offs=sys_rand32_get()&0x000003FF;//EVENT_SYNC_B2B_MAFS_US + offs (us)
-		info_dk_tmp.offs=300+100*evt;
+		info_dk_tmp.offs=300;
 //    info_dk_tmp.chan_idx=sys_rand32_get()%37; // aux_ptr + chan_idx
-		info_dk_tmp.chan_idx=3*rep+evt;
+		info_dk_tmp.chan_idx=3;
     return info_dk_tmp;
 }
 
@@ -140,7 +140,7 @@ void main(void)
 				return;
 			}
 			printk("DATA[0]: %u , DATA[1]: %u \n", mfg_data[0], mfg_data[1]);
-			printk("COUNT_evt: %u\n", count_evt);
+			printk("PDU TIME: %u\n", pdu_time);
 //			count_test=0;
 //			printk("done.\n");
 		}

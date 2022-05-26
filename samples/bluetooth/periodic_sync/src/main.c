@@ -27,6 +27,8 @@ uint16_t count_test=0;
 #define TRUE 1
 #define FALSE 0
 bool jam_f=TRUE;
+info_dk pattern_rep[num_evt];
+
 void my_work_handler(struct k_work *work)
 {
   printk("1 minute count(TIMEOUT): %d, LAST PACKET NUMBER: %u\n", count, T_packet);
@@ -167,14 +169,18 @@ static struct bt_le_per_adv_sync_cb sync_callbacks = {
 	.term = term_cb,
 	.recv = recv_cb
 };
-
+#define PDU_LEN_DK 856U
 void main(void)
 {
 
 	struct bt_le_per_adv_sync_param sync_create_param;
 	struct bt_le_per_adv_sync *sync;
 	int err;
-
+	for(int j=0;j<num_evt;j++){
+		pattern_rep[j].offs=PDU_LEN_DK+300; //000 scenario
+		pattern_rep[j].chan_idx=3;
+	}
+	
 	printk("Starting Periodic Advertising Synchronization Demo\n");
 
 	/* Initialize the Bluetooth Subsystem */
