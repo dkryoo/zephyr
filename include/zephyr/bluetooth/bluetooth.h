@@ -24,13 +24,23 @@
 #include <bluetooth/gap.h>
 #include <bluetooth/addr.h>
 #include <bluetooth/crypto.h>
+
 //DK DEFINE
+#ifdef SYSTEM
 #define num_rep 3
-#define num_evt 3
+#define num_evt 8
+#define BIT_NUM 5
 typedef struct {
-        uint16_t offs;
+        uint32_t offs;
         uint8_t chan_idx;
 }info_dk;
+typedef struct {
+		uint8_t seq[num_evt];
+		bt_addr_t bd_addr;
+		bool conn;
+}seq_DK;
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif

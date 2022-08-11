@@ -26,8 +26,12 @@ uint16_t packet_num=6000;
 uint16_t count_test=0;
 #define TRUE 1
 #define FALSE 0
-bool jam_f=TRUE;
-info_dk pattern_rep[num_evt];
+
+#ifdef SYSTEM
+info_dk pattern_scan[num_evt];
+#define PDU_LEN_DK 856U
+#define SLOT_TIME PDU_LEN_DK+300U
+#endif
 
 void my_work_handler(struct k_work *work)
 {
@@ -139,7 +143,7 @@ static void term_cb(struct bt_le_per_adv_sync *sync,
 
 	printk("DK PER_ADV_SYNC[%u]: [DEVICE]: %s sync terminated\n",
 	       bt_le_per_adv_sync_get_index(sync), le_addr);
-	printk("THE REASON: %u\n", info->reason);
+//	printk("THE REASON: %u\n", info->reason);
 	k_sem_give(&sem_per_sync_lost);
 }
 
@@ -169,18 +173,22 @@ static struct bt_le_per_adv_sync_cb sync_callbacks = {
 	.term = term_cb,
 	.recv = recv_cb
 };
-#define PDU_LEN_DK 856U
+
 void main(void)
 {
 
 	struct bt_le_per_adv_sync_param sync_create_param;
 	struct bt_le_per_adv_sync *sync;
 	int err;
+
+	#ifdef SYSTEM
 	for(int j=0;j<num_evt;j++){
-		pattern_rep[j].offs=PDU_LEN_DK+300; //000 scenario
-		pattern_rep[j].chan_idx=3;
+		pattern_scan[j].offs=1500U; 
+		pattern_scan[j].chan_idx=3;
 	}
-	
+	#endif
+
+	//FOR RESET
 	printk("Starting Periodic Advertising Synchronization Demo\n");
 
 	/* Initialize the Bluetooth Subsystem */
@@ -214,7 +222,7 @@ void main(void)
 		err = k_sem_take(&sem_per_adv, K_FOREVER);
 		if (err) {
 			printk("failed (err %d)\n", err);
-			return;
+			break;
 		}
 		printk("Creating Periodic Advertising Sync...");
 		bt_addr_le_copy(&sync_create_param.addr, &per_addr);
@@ -225,7 +233,7 @@ void main(void)
 		err = bt_le_per_adv_sync_create(&sync_create_param, &sync);
 		if (err) {
 			printk("failed (err %d)\n", err);
-			return;
+			break;
 		}
 		printk("Waiting for periodic sync...\n");
 		err = k_sem_take(&sem_per_sync, TIMEOUT_SYNC_CREATE);
@@ -236,7 +244,7 @@ void main(void)
 			err = bt_le_per_adv_sync_delete(sync);
 			if (err) {
 				printk("failed (err %d)\n", err);
-				return;
+				break;
 			}
 			continue;
 		}
@@ -245,8 +253,9 @@ void main(void)
 		err = k_sem_take(&sem_per_sync_lost, K_FOREVER);
 		if (err) {
 			printk("failed (err %d)\n", err);
-			return;
+			break;
 		}
 		printk("Periodic sync lost.\n");
 	} while (true);
+	return;
 }

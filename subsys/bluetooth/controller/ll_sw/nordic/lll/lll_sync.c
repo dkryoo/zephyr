@@ -67,9 +67,11 @@ static bool is_max_cte_reached(uint8_t max_cte_count, uint8_t cte_count);
 static uint8_t data_channel_calc(struct lll_sync *lll);
 static enum sync_status sync_filtrate_by_cte_type(uint8_t cte_type_mask, uint8_t filter_policy);
 static uint8_t trx_cnt;
-extern info_dk pattern_rep[num_evt];
+
+#ifdef SYSTEM
+extern info_dk pattern_scan[num_evt];
 uint8_t count_evt=0;
-extern bool jam_f;
+#endif
 int lll_sync_init(void)
 {
 	int err;
@@ -395,11 +397,11 @@ static int prepare_cb_common(struct lll_prepare_param *p, uint8_t chan_idx)
 	radio_aa_set(lll->access_addr);
 	radio_crc_configure(PDU_CRC_POLYNOMIAL,
 					sys_get_le24(lll->crc_init));
-	if(jam_f) //DK
-	lll_chan_set(pattern_rep[count_evt].chan_idx);
-	else
+	#ifdef SYSTEM
+	lll_chan_set(pattern_scan[count_evt].chan_idx);
+	#else
 	lll_chan_set(chan_idx);
-
+	#endif
 	node_rx = ull_pdu_rx_alloc_peek(1);
 	LL_ASSERT(node_rx);
 
@@ -408,12 +410,12 @@ static int prepare_cb_common(struct lll_prepare_param *p, uint8_t chan_idx)
 	ticks_at_event = p->ticks_at_expire;
 	ull = HDR_LLL2ULL(lll);
 	ticks_at_event += lll_event_offset_get(ull);
-	if(jam_f){ //DK
-		ticks_at_event+= HAL_TICKER_US_TO_TICKS(pattern_rep[count_evt].offs);
+	#ifdef SYSTEM
+		ticks_at_event+= HAL_TICKER_US_TO_TICKS(pattern_scan[count_evt].offs);
 		count_evt++;
 		if(count_evt==num_evt)
 			count_evt=0;
-	}
+	#endif
 	ticks_at_start = ticks_at_event;
 	ticks_at_start += HAL_TICKER_US_TO_TICKS(EVENT_OVERHEAD_START_US);
 

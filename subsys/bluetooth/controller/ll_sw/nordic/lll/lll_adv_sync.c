@@ -56,23 +56,15 @@ static void pdu_b2b_aux_ptr_update(struct pdu_adv *pdu, uint8_t phy, uint8_t fla
 				   uint8_t chan_idx, uint32_t offset_us, uint32_t cte_len_us);
 static void switch_radio_complete_and_b2b_tx(const struct lll_adv_sync *lll, uint8_t phy_s);
 #endif /* CONFIG_BT_CTLR_ADV_SYNC_PDU_BACK2BACK */
-extern bool jam_f;
+
+#ifdef SYSTEM
 uint16_t COUNT_DK=0;
 extern uint8_t count_test;
 uint8_t count_p=0;
 uint8_t count_evt=0;
-extern info_dk pattern_rep[num_rep][num_evt];
-extern uint32_t pdu_time;//DK
+extern info_dk pattern_rep[num_evt][num_rep];
 
-//DK SEQUENCE EVENT START
-/*
-struct info_dk pattern_sequence(int event_num){
-	printk("TO DO");
-	return 0;
-}
-*/
-//DK SEQUENCE EVENT END
-
+#endif
 
 int lll_adv_sync_init(void)
 {
@@ -169,6 +161,7 @@ static int prepare_cb(struct lll_prepare_param *p)
 	data_chan_count = lll->chm[lll->chm_first].data_chan_count;
 	data_chan_use = lll_chan_sel_2(event_counter, lll->data_chan_id,
 				       data_chan_map, data_chan_count);
+//	LOG_ERR("SYNC[%u]: %u",COUNT_DK,data_chan_use);
 	/* Start setting up of Radio h/w */
 	radio_reset();
 #if defined(CONFIG_BT_CTLR_TX_PWR_DYNAMIC_CONTROL)
@@ -205,17 +198,25 @@ static int prepare_cb(struct lll_prepare_param *p)
 		pdu_b2b_update(lll, pdu, cte_len_us);
 	}
 #endif
-	if(jam_f)
+/*
+	#ifdef SYSTEM
 		pdu_time=PDU_AC_US(pdu->len, lll->adv->phy_s, lll->adv->phy_flags);
+	#endif
+*/	
 	radio_pkt_tx_set(pdu);
 #if defined(CONFIG_BT_CTLR_ADV_SYNC_PDU_BACK2BACK)
-	if ((pdu->adv_ext_ind.ext_hdr_len && pdu->adv_ext_ind.ext_hdr.aux_ptr)|| jam_f ){
+	#ifndef SYSTEM
+	if (pdu->adv_ext_ind.ext_hdr_len && pdu->adv_ext_ind.ext_hdr.aux_ptr){
+	#else
+	if(1){
+	#endif
 		lll->last_pdu = pdu;
 		radio_isr_set(isr_tx, lll);
-		if(jam_f)
-			radio_tmr_tifs_set(EVENT_SYNC_B2B_MAFS_US+pattern_rep[0][count_evt].offs);
-		else
+		#ifdef SYSTEM
+			radio_tmr_tifs_set(EVENT_SYNC_B2B_MAFS_US+pattern_rep[count_evt][0].offs);
+		#else
 			radio_tmr_tifs_set(EVENT_SYNC_B2B_MAFS_US);
+		#endif
 		switch_radio_complete_and_b2b_tx(lll, phy_s);
 	} else
 #endif /* CONFIG_BT_CTLR_ADV_SYNC_PDU_BACK2BACK */
@@ -361,15 +362,16 @@ static void isr_tx(void *param)
 	/* Clear radio tx status and events */
 
 	lll_isr_tx_status_reset();
-
 	lll_sync = param;
 	lll = lll_sync->adv;
 
 	/* FIXME: Use implementation defined channel index */
-	if(jam_f)
-		lll_chan_set(pattern_rep[count_p][count_evt].chan_idx);
-	else
+	#ifdef SYSTEM
+		lll_chan_set(pattern_rep[count_evt][count_p].chan_idx);
+//		LOG_ERR("%u	%u	%u",count_evt,count_p,pattern_rep[count_evt][count_p].chan_idx);
+	#else
 		lll_chan_set(0);
+	#endif
 	pdu = lll_adv_pdu_linked_next_get(lll_sync->last_pdu);
 	LL_ASSERT(pdu);
 	lll_sync->last_pdu = pdu;
@@ -381,9 +383,9 @@ static void isr_tx(void *param)
 #endif /* CONFIG_BT_CTLR_DF_ADV_CTE_TX */
 
 	/* setup tIFS switching */
-	if(jam_f){
+	#ifdef SYSTEM
 		if(count_p<num_rep-1){
-			radio_tmr_tifs_set(EVENT_SYNC_B2B_MAFS_US+pattern_rep[count_p+1][count_evt].offs);
+			radio_tmr_tifs_set(EVENT_SYNC_B2B_MAFS_US+pattern_rep[count_evt][count_p+1].offs);
 			radio_isr_set(isr_tx, lll_sync);
 			switch_radio_complete_and_b2b_tx(lll_sync, lll->phy_s);
 			count_p++;
@@ -396,8 +398,8 @@ static void isr_tx(void *param)
 			if(count_evt==num_evt)
 				count_evt=0;
 		}
-	}
-	else{
+	
+	#else
 	if (pdu->adv_ext_ind.ext_hdr_len && pdu->adv_ext_ind.ext_hdr.aux_ptr) {
 		radio_tmr_tifs_set(EVENT_SYNC_B2B_MAFS_US);
 		radio_isr_set(isr_tx, lll_sync);
@@ -406,7 +408,7 @@ static void isr_tx(void *param)
 		radio_isr_set(isr_done, lll_sync);
 		radio_switch_complete_and_disable();
 	}
-	}
+	#endif
 	radio_pkt_tx_set(pdu);
 
 	/* assert if radio packet ptr is not set and radio started rx */

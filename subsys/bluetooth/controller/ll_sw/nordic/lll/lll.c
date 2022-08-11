@@ -455,7 +455,7 @@ uint32_t lll_preempt_calc(struct ull_hdr *ull, uint8_t ticker_id,
 	return 0;
 }
 
-void lll_chan_set(uint32_t chan)
+void lll_chan_set(uint8_t chan)
 {
 	switch (chan) {
 	case 37:

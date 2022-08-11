@@ -86,7 +86,7 @@ extern "C" {
 #define BT_GAP_PER_ADV_SLOW_INT_MAX             0x03C0  /* 1.2 s    */
 #define BT_GAP_INIT_CONN_INT_MIN                0x0018  /* 30 ms    */
 #define BT_GAP_INIT_CONN_INT_MAX                0x0028  /* 50 ms    */
-#define BT_GAP_PER_ADV_SLOW_INT_DK             0x0320  /* 10 ms      */
+#define BT_GAP_PER_ADV_SLOW_INT_DK              0x0320  /* 10 ms      */
 
 
 /** LE PHY types */

@@ -47,7 +47,6 @@
 #define LOG_MODULE_NAME bt_ctlr_ull_adv_sync
 #include "common/log.h"
 #include "hal/debug.h"
-extern bool jam_f;
 extern uint8_t count_test;
 static int init_reset(void);
 static inline struct ll_adv_sync_set *sync_acquire(void);
@@ -480,12 +479,13 @@ uint8_t ll_adv_sync_ad_data_set(uint8_t handle, uint8_t op, uint8_t len,
 						  0U, 0U, NULL);
 	}
 #endif /* CONFIG_BT_CTLR_DF_ADV_CTE_TX */
-	if(jam_f)
-	err = ull_adv_sync_pdu_set_clear(lll_sync, pdu_prev, pdu, hdr_add_fields, ULL_ADV_PDU_HDR_FIELD_AUX_PTR,
-					 hdr_data);
-	else
-	err = ull_adv_sync_pdu_set_clear(lll_sync, pdu_prev, pdu, hdr_add_fields, 0,
-					 hdr_data);
+	#ifdef SYSTEM
+		err = ull_adv_sync_pdu_set_clear(lll_sync, pdu_prev, pdu, hdr_add_fields, ULL_ADV_PDU_HDR_FIELD_AUX_PTR,
+						hdr_data);
+	#else
+		err = ull_adv_sync_pdu_set_clear(lll_sync, pdu_prev, pdu, hdr_add_fields, 0,
+						hdr_data);
+	#endif
 	if (err) {
 		return err;
 	}
@@ -496,7 +496,7 @@ uint8_t ll_adv_sync_ad_data_set(uint8_t handle, uint8_t op, uint8_t len,
 	 * chain from current PDU and append it to new PDU.
 	 */
 
-	if(jam_f){
+	#ifdef SYSTEM
 		uint8_t count_new=0;
 		struct pdu_adv *pdu_tmp;
 		if(num_rep==1)
@@ -509,10 +509,9 @@ uint8_t ll_adv_sync_ad_data_set(uint8_t handle, uint8_t op, uint8_t len,
 			lll_adv_pdu_linked_append_end(pdu_tmp, pdu);
 			count_new++;
 		}
-	}
-	else{
+	#else
 		adv_sync_pdu_chain_check_and_duplicate(pdu, pdu_prev);	
-	}
+	#endif
 
 	sync = HDR_LLL2ULL(lll_sync);
 	if (sync->is_started) {
@@ -612,9 +611,9 @@ uint8_t ll_adv_sync_enable(uint8_t handle, uint8_t enable)
 							  NULL);
 		}
 #endif /* CONFIG_BT_CTLR_DF_ADV_CTE_TX */
-		if(jam_f){
+		#ifdef SYSTEM
 			hdr_add_fields|=ULL_ADV_PDU_HDR_FIELD_AUX_PTR;
-			}
+		#endif
 		err = ull_adv_sync_pdu_set_clear(lll_sync, pdu_prev, pdu,
 						 hdr_add_fields, hdr_rem_fields,
 						 NULL);
@@ -628,7 +627,7 @@ uint8_t ll_adv_sync_enable(uint8_t handle, uint8_t enable)
 		 */
 
 	 //DK NEW PART START
-	if(jam_f){
+	#ifdef SYSTEM
 	uint8_t count_new=0;
 	while (count_new < num_rep) {
 			struct pdu_adv *pdu_tmp;
@@ -645,10 +644,10 @@ uint8_t ll_adv_sync_enable(uint8_t handle, uint8_t enable)
 			lll_adv_pdu_linked_append_end(pdu_tmp, pdu);
 			++count_new;
 		}
-	}
 	//DK NEW PART END
-	else
+	#else
 		adv_sync_pdu_chain_check_and_duplicate(pdu, pdu_prev);
+	#endif
 	}
 
 	if (adv->is_enabled && !sync->is_started) {
