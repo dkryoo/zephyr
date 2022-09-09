@@ -401,7 +401,6 @@ struct node_rx_hdr {
 	enum node_rx_type type;
 	uint8_t           user_meta; /* User metadata */
 	uint16_t          handle;    /* State/Role instance handle */
-
 	union {
 		struct node_rx_ftr rx_ftr;
 #if defined(CONFIG_BT_CTLR_SYNC_ISO) || defined(CONFIG_BT_CTLR_CONN_ISO)

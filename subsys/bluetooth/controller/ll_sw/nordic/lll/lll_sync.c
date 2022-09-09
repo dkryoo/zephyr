@@ -70,12 +70,14 @@ static uint8_t trx_cnt;
 
 #ifdef SYSTEM
 extern info_dk pattern_scan[num_evt];
-uint8_t count_evt=0;
+extern uint8_t count_evt;
+bool first_dk_lll=true;
+extern bool aaa;
 #endif
+
 int lll_sync_init(void)
 {
 	int err;
-
 	err = init_reset();
 	if (err) {
 		return err;
@@ -87,7 +89,7 @@ int lll_sync_init(void)
 int lll_sync_reset(void)
 {
 	int err;
-
+	
 	err = init_reset();
 	if (err) {
 		return err;
@@ -249,7 +251,6 @@ static int create_prepare_cb(struct lll_prepare_param *p)
 	int err;
 
 	DEBUG_RADIO_START_O(1);
-
 	lll = p->param;
 
 	/* Calculate the current event latency */
@@ -260,10 +261,14 @@ static int create_prepare_cb(struct lll_prepare_param *p)
 
 	/* Reset accumulated latencies */
 	lll->skip_prepare = 0;
-
+#if 0 //def SYSTEM
+	chan_idx=pattern_scan[count_evt].chan_idx;
+	first_dk_lll=false;
+#else
 	chan_idx = data_channel_calc(lll);
-
+#endif
 	/* Update event counter to next value */
+
 	lll->event_counter = (event_counter + 1);
 
 	err = prepare_cb_common(p, chan_idx);
@@ -311,7 +316,6 @@ static int prepare_cb(struct lll_prepare_param *p)
 	struct lll_sync *lll;
 	uint8_t chan_idx;
 	int err;
-
 	DEBUG_RADIO_START_O(1);
 
 	lll = p->param;
@@ -324,12 +328,21 @@ static int prepare_cb(struct lll_prepare_param *p)
 
 	/* Reset accumulated latencies */
 	lll->skip_prepare = 0;
-
+	#ifdef SYSTEM
+	if(!aaa){
 	chan_idx = data_channel_calc(lll);
-
-	/* Update event counter to next value */
 	lll->event_counter = (event_counter + 1);
-
+	}
+	else{
+	chan_idx=pattern_scan[count_evt].chan_idx;
+	count_evt+=1;
+	if(count_evt==num_evt)
+	count_evt=0;
+	}
+	#else
+	chan_idx = data_channel_calc(lll);
+	#endif
+	LOG_ERR("[%u]	COUNT_EVT: %d	CHANNEL: %d",HAL_TICKER_TICKS_TO_US(ticker_ticks_now_get()),count_evt,chan_idx);
 	err = prepare_cb_common(p, chan_idx);
 	if (err) {
 		DEBUG_RADIO_START_O(1);
@@ -372,9 +385,7 @@ static int prepare_cb_common(struct lll_prepare_param *p, uint8_t chan_idx)
 	struct ull_hdr *ull;
 	uint32_t remainder;
 	uint32_t hcto;
-
 	lll = p->param;
-
 	/* Current window widening */
 	lll->window_widening_event_us += lll->window_widening_prepare_us;
 	lll->window_widening_prepare_us = 0;
@@ -392,16 +403,15 @@ static int prepare_cb_common(struct lll_prepare_param *p, uint8_t chan_idx)
 	radio_reset();
 
 	radio_phy_set(lll->phy, PHY_FLAGS_S8);
+	
+
 	radio_pkt_configure(RADIO_PKT_CONF_LENGTH_8BIT, LL_EXT_OCTETS_RX_MAX,
 			    RADIO_PKT_CONF_PHY(lll->phy));
 	radio_aa_set(lll->access_addr);
 	radio_crc_configure(PDU_CRC_POLYNOMIAL,
 					sys_get_le24(lll->crc_init));
-	#ifdef SYSTEM
-	lll_chan_set(pattern_scan[count_evt].chan_idx);
-	#else
-	lll_chan_set(chan_idx);
-	#endif
+	//lll_chan_set(chan_idx);
+	lll_chan_set(3);
 	node_rx = ull_pdu_rx_alloc_peek(1);
 	LL_ASSERT(node_rx);
 
@@ -410,12 +420,6 @@ static int prepare_cb_common(struct lll_prepare_param *p, uint8_t chan_idx)
 	ticks_at_event = p->ticks_at_expire;
 	ull = HDR_LLL2ULL(lll);
 	ticks_at_event += lll_event_offset_get(ull);
-	#ifdef SYSTEM
-		ticks_at_event+= HAL_TICKER_US_TO_TICKS(pattern_scan[count_evt].offs);
-		count_evt++;
-		if(count_evt==num_evt)
-			count_evt=0;
-	#endif
 	ticks_at_start = ticks_at_event;
 	ticks_at_start += HAL_TICKER_US_TO_TICKS(EVENT_OVERHEAD_START_US);
 
@@ -563,7 +567,6 @@ static void isr_aux_setup(void *param)
 	} else {
 		window_widening_us = SCA_DRIFT_500_PPM_US(aux_offset_us);
 	}
-
 	/* Setup radio for auxiliary PDU scan */
 	radio_phy_set(phy_aux, PHY_FLAGS_S8);
 	radio_pkt_configure(RADIO_PKT_CONF_LENGTH_8BIT, LL_EXT_OCTETS_RX_MAX,
@@ -642,9 +645,10 @@ static int isr_rx(struct lll_sync *lll, uint8_t node_type, uint8_t crc_ok,
 		  uint8_t phy_flags_rx, uint8_t cte_ready, uint8_t rssi_ready,
 		  enum sync_status status)
 {
+			//LOG_ERR("ISR_RX");
+
 	bool sched = false;
 	int err;
-
 	/* Check CRC and generate Periodic Advertising Report */
 	if (crc_ok) {
 		struct node_rx_pdu *node_rx;
@@ -839,9 +843,7 @@ static void isr_rx_adv_sync(void *param)
 	uint8_t trx_done;
 	uint8_t crc_ok;
 	int err;
-
 	lll = param;
-
 	/* Read radio status and events */
 	trx_done = radio_is_done();
 	if (trx_done) {
@@ -1013,6 +1015,7 @@ static void isr_rx_done_cleanup(struct lll_sync *lll, uint8_t crc_ok, bool sync_
 static void isr_done(void *param)
 {
 	struct lll_sync *lll;
+	//LOG_ERR("ISR_DONE");
 
 	lll_isr_status_reset();
 

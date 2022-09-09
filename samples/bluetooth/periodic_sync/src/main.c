@@ -31,11 +31,12 @@ uint16_t count_test=0;
 info_dk pattern_scan[num_evt];
 #define PDU_LEN_DK 856U
 #define SLOT_TIME PDU_LEN_DK+300U
+bool adv_success=false;
 #endif
 
 void my_work_handler(struct k_work *work)
 {
-  printk("1 minute count(TIMEOUT): %d, LAST PACKET NUMBER: %u\n", count, T_packet);
+//  printk("1 minute count(TIMEOUT): %d, LAST PACKET NUMBER: %u\n", count, T_packet);
   count=0;
 //	printk("COUNT TEST for 10 seconds: %u\n", count_test);
 //	count_test=0;
@@ -126,11 +127,13 @@ static void sync_cb(struct bt_le_per_adv_sync *sync,
 
 	bt_addr_le_to_str(info->addr, le_addr, sizeof(le_addr));
 
-	printk("DK PER_ADV_SYNC[%u]: [DEVICE]: %s synced, "
-	       "Interval 0x%04x (%u ms), PHY %s\n",
-	       bt_le_per_adv_sync_get_index(sync), le_addr,
-	       info->interval, info->interval * 5 / 4, phy2str(info->phy));
-
+//	printk("DK PER_ADV_SYNC[%u]: [DEVICE]: %s synced, "
+//	       "Interval 0x%04x (%u ms), PHY %s\n",
+//	       bt_le_per_adv_sync_get_index(sync), le_addr,
+//	       info->interval, info->interval * 5 / 4, phy2str(info->phy));
+#ifdef SYSTEM
+	adv_success=true;//
+#endif
 	k_sem_give(&sem_per_sync);
 }
 
@@ -141,9 +144,10 @@ static void term_cb(struct bt_le_per_adv_sync *sync,
 
 	bt_addr_le_to_str(info->addr, le_addr, sizeof(le_addr));
 
-	printk("DK PER_ADV_SYNC[%u]: [DEVICE]: %s sync terminated\n",
-	       bt_le_per_adv_sync_get_index(sync), le_addr);
+//	printk("DK PER_ADV_SYNC[%u]: [DEVICE]: %s sync terminated\n",
+//	       bt_le_per_adv_sync_get_index(sync), le_addr);
 //	printk("THE REASON: %u\n", info->reason);
+
 	k_sem_give(&sem_per_sync_lost);
 }
 
@@ -160,11 +164,11 @@ static void recv_cb(struct bt_le_per_adv_sync *sync,
 	       bt_le_per_adv_sync_get_index(sync), le_addr, info->tx_power,
 	       info->rssi, info->cte_type, buf->len, data_str);
 		   */
-	printk("DATA[0]: %u , DATA[1]: %u, length: %u\n", buf->data[2], buf->data[3],buf->len);
+	printk("DATA[0]: %u , DATA[1]: %u, length: %u, handle: %u\n", buf->data[2], buf->data[3],buf->len,bt_le_per_adv_sync_get_index(sync));
 	T_packet=256U*buf->data[3]+buf->data[2];
 	count=count+1;
 	if(T_packet>packet_num-1){
-		printk("PACKET OVER %u, Count: %d, TOTAL PACKET: %u", packet_num,count,T_packet);
+//		printk("PACKET OVER %u, Count: %d, TOTAL PACKET: %u", packet_num,count,T_packet);
 	}
 }
 

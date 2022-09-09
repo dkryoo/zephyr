@@ -131,6 +131,7 @@ uint8_t ll_sync_create(uint8_t options, uint8_t sid, uint8_t adv_addr_type,
 		       uint16_t sync_timeout, uint8_t sync_cte_type);
 uint8_t ll_sync_create_cancel(void **rx);
 uint8_t ll_sync_terminate(uint16_t handle);
+
 uint8_t ll_sync_recv_enable(uint16_t handle, uint8_t enable);
 uint8_t ll_big_sync_create(uint8_t big_handle, uint16_t sync_handle,
 			   uint8_t encryption, uint8_t *bcode, uint8_t mse,

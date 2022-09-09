@@ -473,7 +473,9 @@ static MFIFO_DEFINE(tx_ack, sizeof(struct lll_tx),
 
 static void *mark_update;
 #endif /* CONFIG_BT_CONN */
-
+#if 0 //def SYSTEM
+//bool report_dk=false;
+#endif
 static void *mark_disable;
 
 static inline int init_reset(void);

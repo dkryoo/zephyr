@@ -3801,7 +3801,6 @@ static void le_per_adv_recv_enable(struct net_buf *buf, struct net_buf **evt)
 		}
 	}
 #endif
-
 	ccst = hci_cmd_complete(evt, sizeof(*ccst));
 	ccst->status = status;
 }
@@ -7509,7 +7508,6 @@ static void encode_control(struct node_rx_pdu *node_rx,
 	uint16_t handle;
 
 	handle = node_rx->hdr.handle;
-
 	switch (node_rx->hdr.type) {
 #if defined(CONFIG_BT_OBSERVER)
 	case NODE_RX_TYPE_REPORT:

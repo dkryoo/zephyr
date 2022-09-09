@@ -56,9 +56,9 @@ static void pdu_b2b_aux_ptr_update(struct pdu_adv *pdu, uint8_t phy, uint8_t fla
 				   uint8_t chan_idx, uint32_t offset_us, uint32_t cte_len_us);
 static void switch_radio_complete_and_b2b_tx(const struct lll_adv_sync *lll, uint8_t phy_s);
 #endif /* CONFIG_BT_CTLR_ADV_SYNC_PDU_BACK2BACK */
+uint16_t COUNT_DK=0;
 
 #ifdef SYSTEM
-uint16_t COUNT_DK=0;
 extern uint8_t count_test;
 uint8_t count_p=0;
 uint8_t count_evt=0;
@@ -179,7 +179,8 @@ static int prepare_cb(struct lll_prepare_param *p)
 	radio_aa_set(lll->access_addr);
 	radio_crc_configure(PDU_CRC_POLYNOMIAL,
 				sys_get_le24(lll->crc_init));
-	lll_chan_set(data_chan_use);
+//	lll_chan_set(data_chan_use); just for timing...!
+	lll_chan_set(3);
 	upd = 0U;
 	pdu = lll_adv_sync_data_latest_get(lll, NULL, &upd);
 	LL_ASSERT(pdu);

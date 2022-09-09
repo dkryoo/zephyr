@@ -6,8 +6,13 @@
 
 int ull_sync_init(void);
 int ull_sync_reset(void);
+#if 0//def SYSTEM
+uint16_t ull_sync_handle_get(struct ll_sync_set *sync,bool first);
+struct ll_sync_set *ull_sync_is_enabled_get(uint16_t handle,bool first);
+#else
 uint16_t ull_sync_handle_get(struct ll_sync_set *sync);
 struct ll_sync_set *ull_sync_is_enabled_get(uint16_t handle);
+#endif
 void ull_sync_release(struct ll_sync_set *sync);
 void ull_sync_setup_addr_check(struct ll_scan_set *scan, uint8_t addr_type,
 			       uint8_t *addr, uint8_t rl_idx);

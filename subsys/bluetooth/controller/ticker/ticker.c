@@ -2738,7 +2738,54 @@ uint32_t ticker_start(uint8_t instance_index, uint8_t user_id, uint8_t ticker_id
 
 	return user_op->status;
 }
+#ifdef SYSTEM
+uint32_t ticker_start_dk(uint8_t instance_index, uint8_t user_id, uint8_t ticker_id,
+		   uint32_t ticks_anchor, uint32_t ticks_first, uint32_t ticks_periodic,
+		   uint32_t remainder_periodic, uint16_t lazy, uint32_t ticks_slot,
+		   ticker_timeout_func fp_timeout_func, void *context,
+		   ticker_op_func fp_op_func, void *op_context)
+{
+	struct ticker_instance *instance = &_instance[instance_index];
+	struct ticker_user_op *user_op;
+	struct ticker_user *user;
+	uint8_t last;
 
+	user = &instance->users[user_id];
+
+	last = user->last + 1;
+	if (last >= user->count_user_op) {
+		last = 0U;
+	}
+
+	if (last == user->first) {
+		return TICKER_STATUS_FAILURE;
+	}
+
+	user_op = &user->user_op[user->last];
+	user_op->op = TICKER_USER_OP_TYPE_START;
+	user_op->id = ticker_id;
+	user_op->params.start.ticks_at_start = ticks_anchor;
+	user_op->params.start.ticks_first = ticks_first;
+	user_op->params.start.ticks_periodic = ticks_periodic;
+	user_op->params.start.remainder_periodic = remainder_periodic;
+#if !defined(CONFIG_BT_TICKER_SLOT_AGNOSTIC)
+	user_op->params.start.ticks_slot = ticks_slot;
+#endif
+	user_op->params.start.lazy = lazy;
+	user_op->params.start.fp_timeout_func = fp_timeout_func;
+	user_op->params.start.context = context;
+	user_op->status = TICKER_STATUS_BUSY;
+	user_op->fp_op_func = fp_op_func;
+	user_op->op_context = op_context;
+
+	user->last = last;
+
+	instance->sched_cb(instance->caller_id_get_cb(user_id),
+			   TICKER_CALL_ID_JOB, 0, instance);
+
+	return user_op->status;
+}
+#endif
 /**
  * @brief Update a ticker node
  *
@@ -2798,7 +2845,6 @@ uint32_t ticker_update_ext(uint8_t instance_index, uint8_t user_id,
 	struct ticker_user_op *user_op;
 	struct ticker_user *user;
 	uint8_t last;
-
 	user = &instance->users[user_id];
 
 	last = user->last + 1;
@@ -2832,7 +2878,6 @@ uint32_t ticker_update_ext(uint8_t instance_index, uint8_t user_id,
 
 	instance->sched_cb(instance->caller_id_get_cb(user_id),
 			   TICKER_CALL_ID_JOB, 0, instance);
-
 	return user_op->status;
 }
 

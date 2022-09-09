@@ -262,8 +262,11 @@ void ull_scan_aux_setup(memq_link_t *link, struct node_rx_hdr *rx)
 		} else {
 			/* Here we are periodic sync context */
 			rx->type = NODE_RX_TYPE_SYNC_REPORT;
+			#if 0//def SYSTEM
+			rx->handle = ull_sync_handle_get(sync,0);
+			#else
 			rx->handle = ull_sync_handle_get(sync);
-
+			#endif
 			/* Check if we need to create BIG sync */
 			sync_iso = sync_iso_create_get(sync);
 
@@ -278,7 +281,6 @@ void ull_scan_aux_setup(memq_link_t *link, struct node_rx_hdr *rx)
 	case NODE_RX_TYPE_SYNC_REPORT:
 		{
 			struct ll_sync_set *ull_sync;
-
 			/* set the sync handle corresponding to the LLL context
 			 * passed in the node rx footer field.
 			 */
@@ -286,7 +288,11 @@ void ull_scan_aux_setup(memq_link_t *link, struct node_rx_hdr *rx)
 			LL_ASSERT(!sync_lll->lll_aux);
 
 			ull_sync = HDR_LLL2ULL(sync_lll);
+			#if 0//def SYSTEM
+			rx->handle = ull_sync_handle_get(ull_sync,0);
+			#else
 			rx->handle = ull_sync_handle_get(ull_sync);
+			#endif
 
 			/* Check if we need to create BIG sync */
 			sync_iso = sync_iso_create_get(ull_sync);
@@ -307,8 +313,11 @@ void ull_scan_aux_setup(memq_link_t *link, struct node_rx_hdr *rx)
 			 */
 			rx_incomplete = ftr->extra;
 
-			ticker_yield_handle = TICKER_ID_SCAN_SYNC_BASE +
-					      ull_sync_handle_get(ull_sync);
+			#if 0//def SYSTEM
+			ticker_yield_handle = TICKER_ID_SCAN_SYNC_BASE + ull_sync_handle_get(ull_sync,0);
+			#else
+			ticker_yield_handle = TICKER_ID_SCAN_SYNC_BASE + ull_sync_handle_get(ull_sync);
+			#endif
 #endif /* CONFIG_BT_CTLR_SYNC_PERIODIC */
 
 		}
@@ -884,7 +893,11 @@ void ull_scan_aux_release(memq_link_t *link, struct node_rx_hdr *rx)
 		 * data properly.
 		 */
 		rx->type = NODE_RX_TYPE_SYNC_REPORT;
+		#if 0//def SYSTEM
+		rx->handle = ull_sync_handle_get(sync,0);
+		#else
 		rx->handle = ull_sync_handle_get(sync);
+		#endif
 
 		/* Dequeue will try releasing list of node rx, set the extra
 		 * pointer to NULL.
@@ -1211,7 +1224,11 @@ static void aux_sync_incomplete(void *param)
 
 		/* prepare sync report with failure */
 		rx->type = NODE_RX_TYPE_SYNC_REPORT;
+		#if 0//def SYSTEM
+		rx->handle = ull_sync_handle_get(sync,0);
+		#else
 		rx->handle = ull_sync_handle_get(sync);
+		#endif
 		rx->rx_ftr.param = lll;
 
 		/* flag chain reception failure */

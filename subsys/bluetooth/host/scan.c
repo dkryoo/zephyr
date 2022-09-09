@@ -26,7 +26,7 @@
 
 static bt_le_scan_cb_t *scan_dev_found_cb;
 static sys_slist_t scan_cbs = SYS_SLIST_STATIC_INIT(&scan_cbs);
-
+bool first_scan=true;
 #if defined(CONFIG_BT_EXT_ADV)
 /* A buffer used to reassemble advertisement data from the controller. */
 NET_BUF_SIMPLE_DEFINE(ext_scan_buf, CONFIG_BT_EXT_SCAN_BUF_SIZE);
@@ -719,7 +719,6 @@ static struct bt_le_per_adv_sync *get_pending_per_adv_sync(void)
 			return &per_adv_sync_pool[i];
 		}
 	}
-
 	return NULL;
 }
 
@@ -742,7 +741,6 @@ void bt_hci_le_per_adv_report_recv(struct bt_le_per_adv_sync *per_adv_sync,
 {
 	struct net_buf_simple_state state;
 	struct bt_le_per_adv_sync_cb *listener;
-//	printk("RECV?\n"); //DK
 	SYS_SLIST_FOR_EACH_CONTAINER(&pa_sync_cbs, listener, node) {
 		if (listener->recv) {
 			net_buf_simple_save(buf, &state);
@@ -762,17 +760,20 @@ void bt_hci_le_per_adv_report(struct net_buf *buf)
 		BT_ERR("Unexpected end of buffer");
 		return;
 	}
-
+//	LOG_ERR("%u	%u",per_adv_sync_pool[0].flags,per_adv_sync_pool[1].flags);
 	evt = net_buf_pull_mem(buf, sizeof(*evt));
-
+#if 0//def SYSTEM
+	per_adv_sync=&per_adv_sync_pool[0];
+#else
 	per_adv_sync = bt_hci_get_per_adv_sync(sys_le16_to_cpu(evt->handle));
 
 	if (!per_adv_sync) {
+		
 		BT_ERR("Unknown handle 0x%04X for periodic advertising report",
 		       sys_le16_to_cpu(evt->handle));
 		return;
 	}
-
+#endif
 	if (atomic_test_bit(per_adv_sync->flags,
 			    BT_PER_ADV_SYNC_RECV_DISABLED)) {
 		BT_ERR("Received PA adv report when receive disabled");
@@ -854,7 +855,12 @@ void bt_hci_le_per_adv_sync_established(struct net_buf *buf)
 	int err;
 
 	pending_per_adv_sync = get_pending_per_adv_sync();
-
+	#if 0//def SYSTEM
+	if(!pending_per_adv_sync){
+		pending_per_adv_sync = &per_adv_sync_pool[0];
+	}
+	#endif
+	
 	if (pending_per_adv_sync) {
 		atomic_clear_bit(pending_per_adv_sync->flags,
 				 BT_PER_ADV_SYNC_SYNCING);
@@ -875,7 +881,7 @@ void bt_hci_le_per_adv_sync_established(struct net_buf *buf)
 
 		return;
 	}
-
+//DKDKDKDKDKDKDKDKDKDKDKDKDKDKDKDKDKDKDKDKDKDKDKDKDKDKDKDKDKDKDKDKDKDKDKDKDKDKDKDKDKDKDKDKDKDKDKDKDKDKDKDKDKDKDKDKDKDKDKDKDKDKDKDKDKDKDKDKDKDKDKDKDKDKDKDKDK
 	if (!pending_per_adv_sync ||
 	    (!atomic_test_bit(pending_per_adv_sync->flags,
 			      BT_PER_ADV_SYNC_SYNCING_USE_LIST) &&
@@ -884,7 +890,6 @@ void bt_hci_le_per_adv_sync_established(struct net_buf *buf)
 		BT_ERR("Unexpected per adv sync established event");
 		/* Request terminate of pending periodic advertising in controller */
 		per_adv_sync_terminate(sys_le16_to_cpu(evt->handle));
-
 		unexpected_evt = true;
 	} else {
 		unexpected_evt = false;
@@ -925,7 +930,6 @@ void bt_hci_le_per_adv_sync_established(struct net_buf *buf)
 #endif /* CONFIG_BT_PER_ADV_SYNC_BUF_SIZE > 0 */
 
 	atomic_set_bit(pending_per_adv_sync->flags, BT_PER_ADV_SYNC_SYNCED);
-
 	pending_per_adv_sync->handle = sys_le16_to_cpu(evt->handle);
 	pending_per_adv_sync->interval = sys_le16_to_cpu(evt->interval);
 	pending_per_adv_sync->clock_accuracy =
