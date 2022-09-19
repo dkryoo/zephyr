@@ -259,6 +259,7 @@ static int create_prepare_cb(struct lll_prepare_param *p)
 	lll->skip_prepare = 0;
 
 	chan_idx = data_channel_calc(lll);
+	//LOG_ERR("SYNC: %u, event_counter: %u",HAL_TICKER_TICKS_TO_US(ticker_ticks_now_get()),event_counter);
 
 	/* Update event counter to next value */
 	lll->event_counter = (event_counter + 1);
@@ -396,6 +397,7 @@ static int prepare_cb_common(struct lll_prepare_param *p, uint8_t chan_idx)
 					sys_get_le24(lll->crc_init));
 
 	lll_chan_set(chan_idx);
+	//lll_chan_set(3);//DKDKDKDKDKDKDK
 
 	node_rx = ull_pdu_rx_alloc_peek(1);
 	LL_ASSERT(node_rx);

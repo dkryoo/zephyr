@@ -23,6 +23,9 @@ extern uint32_t offset_dk;
 extern uint32_t window_size_dk;
 uint8_t mfg_data[90];
 uint8_t jam_f;
+//extern uint32_t tmp_DKDK;
+//extern uint8_t evt_dk;
+//extern bool first_DKDK;
 //int NUM=0;
 /* The devicetree node identifier for the "led0" alias. */
 static bool data_cb(struct bt_data *data, void *user_data)
@@ -150,7 +153,6 @@ void main(void)
 	struct bt_data ad[] = {
         BT_DATA(BT_DATA_MANUFACTURER_DATA, mfg_data, sizeof(mfg_data)),
 	};
-	printk("DATA SET DK\n");
 	/* Initialize the Bluetooth Subsystem */
 	err = bt_enable(NULL);
 	if (err) {
@@ -171,6 +173,7 @@ void main(void)
                 printk("Failed to create advertising set (err %d)\n", err);
                 return;
         }  
+
 do{
 	//SCAN START
 	printk("Start scanning...");
@@ -203,18 +206,26 @@ do{
                 printk("Failed to stop scanning (err %d)\n", err);
 		return;
         }
-	//JAM PARAMETER UPDATE
-
-	bt_le_ext_adv_set_data(adv, ad, ARRAY_SIZE(ad), NULL, 0);
+		err=bt_le_ext_adv_set_data(adv, ad, ARRAY_SIZE(ad), NULL, 0);
+		if(err){
+		printk("Set data failed (Err%d)\n", err);
+		}
 	//JAMMING START for 10 seconds
 	printk("JAMMER START\n");
-        err = bt_le_ext_adv_start(adv, BT_LE_EXT_ADV_START_DEFAULT);
+	//printk("JAMMER START, %u\n",evt_dk);
+
+
+    err = bt_le_ext_adv_start(adv, BT_LE_EXT_ADV_START_DEFAULT);
 	if(err){
 	printk("Starting Jamming failed (Err%d)\n", err);
 	}
+
 	k_sleep(K_SECONDS(10));
 	//AUX_STOP	
 	bt_le_ext_adv_stop(adv);
+	//first_DKDK=true;
+	//evt_dk++;
+	//tmp_DKDK++;
 	}while(true);
 }
 

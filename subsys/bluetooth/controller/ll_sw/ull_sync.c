@@ -103,6 +103,7 @@ uint16_t data_chan_id_dk;
 uint8_t chan_map_dk[5];
 uint8_t data_chan_count_dk;
 uint32_t anchor_dk;
+uint32_t tmp_DKDK=0;//8711;
 
 uint8_t ll_sync_create(uint8_t options, uint8_t sid, uint8_t adv_addr_type,
 			    uint8_t *adv_addr, uint16_t skip,
@@ -647,7 +648,7 @@ void ull_sync_setup(struct ll_scan_set *scan, struct ll_scan_aux_set *aux,
 	lll->phy = aux->lll.phy;
 
 //DK START
-	event_counter_dk=lll->event_counter+lll->skip_prepare;
+	event_counter_dk=lll->event_counter+lll->skip_prepare+1;
 	skip_prepare_dk=lll->skip_prepare;
 	data_chan_id_dk=lll->data_chan_id;
 	for(int i=0; i<5;i++)
@@ -657,7 +658,7 @@ void ull_sync_setup(struct ll_scan_set *scan, struct ll_scan_aux_set *aux,
 
 	interval = sys_le16_to_cpu(si->interval);
 	interval_us = interval * PERIODIC_INT_UNIT_US;
-	interval_dk = interval_us;//DK
+	interval_dk = interval_us;//DKDK
 
 	/* Convert fromm 10ms units to interval units */
 	sync->timeout_reload = RADIO_SYNC_EVENTS((sync->timeout * 10U *
@@ -757,9 +758,10 @@ void ull_sync_setup(struct ll_scan_set *scan, struct ll_scan_aux_set *aux,
 	}
 	ticks_slot_offset += HAL_TICKER_US_TO_TICKS(EVENT_OVERHEAD_START_US);
 //DK START
-	anchor_dk= ftr->ticks_anchor - ticks_slot_offset+HAL_TICKER_US_TO_TICKS(interval_us);
+	anchor_dk= ftr->ticks_anchor - ticks_slot_offset+HAL_TICKER_US_TO_TICKS(8711);//HAL_TICKER_US_TO_TICKS(interval_us);//+HAL_TICKER_US_TO_TICKS(tmp_DKDK*1000);
     wpu_dk=lll->window_widening_periodic_us;//DK
     offset_dk = HAL_TICKER_US_TO_TICKS(sync_offset_us);//DK
+	LOG_ERR("[%u][Expected time %u] ANCHOR POINT: %u, Offset: %u\n",event_counter_dk,HAL_TICKER_TICKS_TO_US(anchor_dk+offset_dk),HAL_TICKER_TICKS_TO_US(anchor_dk),HAL_TICKER_TICKS_TO_US(offset_dk));//DK
 //DK END
 	sync->lll_sync_prepare = lll_sync_create_prepare;
 

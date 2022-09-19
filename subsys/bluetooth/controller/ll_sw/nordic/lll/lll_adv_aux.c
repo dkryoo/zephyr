@@ -69,7 +69,9 @@ extern uint8_t chan_map_dk[5];
 extern uint8_t data_chan_count_dk;
 extern uint16_t skip_prepare_dk;
 uint8_t next_chan;//DK
-
+//extern uint32_t anchor_dk;
+//extern uint32_t offset_dk;
+//bool first_DKDK=true;
 int lll_adv_aux_init(void)
 {
 	int err;
@@ -209,8 +211,18 @@ static int prepare_cb(struct lll_prepare_param *p)
 	radio_crc_configure(PDU_CRC_POLYNOMIAL,
 					PDU_AC_CRC_IV);
 
+	//event_counter_dk+=skip_prepare_dk;//DK	
+	//if(first_DKDK){
+	//	event_counter_dk+=HAL_TICKER_TICKS_TO_US(ticker_ticks_now_get()-anchor_dk-offset_dk)/interval_dk;
+	//	first_DKDK=false;
+	//}
+
 	event_counter_dk+=skip_prepare_dk+1;//DK	
+
     next_chan = lll_chan_sel_2(event_counter_dk,data_chan_id_dk,&chan_map_dk[0],data_chan_count_dk);
+	LOG_ERR("[%u]TX CHAN: %u, event_counter: %u",HAL_TICKER_TICKS_TO_US(ticker_ticks_now_get()), next_chan,event_counter_dk);
+
+	//next_chan=3;
 		/* Use channel idx in aux_ptr */
 	aux_ptr->chan_idx = next_chan;//DK
 	lll_chan_set(aux_ptr->chan_idx);
